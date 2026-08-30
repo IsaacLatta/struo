@@ -1,0 +1,40 @@
+{
+    "version": 5,
+
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
+
+    "configurePresets": [
+        {
+            "name": "vcpkg",
+            "hidden": true,
+            "generator": "Ninja",
+            "toolchainFile": "${sourceDir}/external/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        },
+
+        {
+            "name": "dev",
+            "displayName": "Library Developer Build",
+            "description": "Developer build using vcpkg",
+            "inherits": "vcpkg",
+
+            "binaryDir": "${sourceDir}/build/dev",
+
+            "cacheVariables": {
+                "STRUO_BUILD_TESTS": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ],
+
+    "buildPresets": [
+        {
+            "name": "dev",
+            "displayName": "Library Developer Build",
+            "configurePreset": "dev"
+        }
+    ]
+}
