@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include <concepts>
 
 namespace struo::detail {
 
@@ -14,10 +15,16 @@ namespace struo::detail {
     };
 
     template<typename, typename... Args>
-    struct ArgList {
+    struct ArgPack {
         std::tuple<Args...> values;
 
-        constexpr explicit ArgList(Args&&... args) : values{std::forward<args>(args)...} {}
+        constexpr explicit ArgPack(Args... args) : values{std::move(args)...} {}
     };
 
+    template<typename Container, typename Tag, typename... Args>
+    constexpr void apply_arg_pack(ArgPack<Tag, Args...>&& pack, Container& container) {
+        std::apply([&](auto&&... values) {
+            (container.emplace_back(std::move(values)), ...);
+        }, std::move(pack.values));
+    }
 }

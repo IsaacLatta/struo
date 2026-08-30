@@ -12,12 +12,6 @@ namespace struo::detail {
     template<typename Derived>
     class Node {
     public:
-        template<typename... Args>
-        requires AppearsOnce<Key>
-        constexpr explicit Node(Args&&... args) {
-            (apply(std::forward<Args>(args)), ...);
-        }
-
         [[nodiscard]] constexpr Key getKey() const noexcept {
             return key_;
         }
@@ -26,16 +20,16 @@ namespace struo::detail {
             return description_;
         }
 
-        [[nodiscard]] constexpr std::span<const Alias> getAliases() const noexcept {
-            return aliases_;
+        [[nodiscard]] constexpr auto getAliases() const noexcept {
+            return std::ranges::views::all(aliases_);
         }
 
-        [[nodiscard]] constexpr std::span<const ObjectDefault<Derived>> getObjectDefaults() const noexcept {
-            return object_defaults_;
+        [[nodiscard]] constexpr auto getObjectDefaults() const noexcept {
+            return std::views::all(object_defaults_);
         }
 
-        [[nodiscard]] constexpr std::span<const ObjectConstraints<Derived>> getObjectConstraints() const noexcept {
-            return object_constraints_;
+        [[nodiscard]] constexpr auto getObjectConstraints() const noexcept {
+            return std::views::all(object_constraints_);
         }
 
     protected:
@@ -53,16 +47,12 @@ namespace struo::detail {
 
         template<typename... Defaults>
         constexpr void apply(ObjectDefaults<Defaults...> defaults) {
-            std::apply([this](auto&& callable) {
-                object_defaults_.emplace_back(std::forward<decltype(callable)>(callable));
-            }, std::move(defaults.values));
+            apply_arg_pack(std::move(defaults), object_defaults_);
         }
 
         template<typename... Constraints>
         constexpr void apply(ObjectConstraints<Constraints...> constraints) {
-            std::apply([this](auto&& callable) {
-                object_constraints_.emplace_back(std::forward<decltype(callable)>(callable));
-            }, std::move(constraints.values));
+            apply_arg_pack(std::move(constraints), object_constraints_);
         }
 
     private:
