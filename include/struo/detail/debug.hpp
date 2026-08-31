@@ -18,7 +18,7 @@ namespace struo::detail {
     [[noreturn]]
     inline void on_assertion(const std::stacktrace& trace, const std::source_location& where, std::string_view condition) noexcept {
         try {
-            std::println(stderr, "STRUO CHECK: check {}", condition);
+            std::println(stderr, "STRUO CHECK FAILED: check {} ", condition);
             std::println(stderr, "at {}:{} in {}\n{}", file_basename(where.file_name()), where.line(), where.function_name(), trace);
         }
         catch (...) {}
@@ -33,9 +33,9 @@ namespace struo::detail {
         std::format_string<Args...> fmt,
         Args&&... args) noexcept {
         try {
-            std::print(stderr, "STRUO CHECK: check {} | ", condition);
-            std::println(stderr, fmt, std::forward<Args>(args)...);
-            std::println(stderr, "at {}:{} in {}\n{}", file_basename(where.file_name()), where.line(), where.function_name(), trace);
+            std::print(stderr, "STRUO CHECK FAILED: check {} | ", condition);
+            std::print(stderr, fmt, std::forward<Args>(args)...);
+            std::println(stderr, " at {}:{} in {}\n{}", file_basename(where.file_name()), where.line(), where.function_name(), trace);
         }
         catch (...) {}
         std::abort();

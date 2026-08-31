@@ -55,6 +55,7 @@ target_link_libraries(struo
         PUBLIC
         yaml-cpp::yaml-cpp
         magic_enum::magic_enum
+        stdc++exp
 
         PUBLIC
         struo_defs

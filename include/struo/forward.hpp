@@ -9,6 +9,10 @@
 
 namespace struo {
 
+    enum class FileFormat {
+        YAML
+    };
+
     class Error;
 
     struct DefaultSchema {};
