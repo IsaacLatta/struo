@@ -21,24 +21,29 @@ namespace struo::detail {
     struct ValueTraits<T> {
         using key_type = typename T::key_type;
         using mapped_type = typename T::mapped_type;
+        using staged_mapped_type = typename ValueTraits<mapped_type>::staged_type;
+        using staged_type = std::vector<std::pair<key_type, staged_mapped_type>>;
     };
 
     template<typename T>
     requires IsSequence<T>
     struct ValueTraits<T> {
         using element_type = typename T::value_type;
+        using staged_element_type = typename ValueTraits<element_type>::staged_type;
+        using staged_type = std::vector<staged_element_type>;
     };
 
     template<typename T>
     requires IsScalar<T>
     struct ValueTraits<T> {
         using value_type = T;
+        using staged_type = value_type;
     };
 
     template<typename T>
     requires IsObject<T>
     struct ValueTraits<T> {
-        using value_type = T;
         using schema_type = decltype(SchemaTraits<T>::schema());
+        using staged_type = schema_type;
     };
 }
