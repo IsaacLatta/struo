@@ -30,7 +30,7 @@ namespace struo {
         }
 
     private:
-        ErrorCode code_{}; // maybe std::error_code instead, user can plug in their errors? Then we duplicate "message".
+        ErrorCode code_{}; // maybe std::error_code instead, user can plug in their errors? Then we duplicate "message"?
         std::string message_{};
         std::source_location location_{};
     };

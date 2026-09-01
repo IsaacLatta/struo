@@ -12,6 +12,7 @@
 #include "struo/definitions.hpp"
 
 #include "struo/detail/detail.hpp"
+#include "struo/detail/traits.hpp"
 
 namespace struo {
 
@@ -23,9 +24,11 @@ namespace struo {
         // or maybe the function traversing converts say enums -> strings
         // and chronos -> uints, etc.
 
+        explicit constexpr YamlParser(std::string_view contents) : contents_(contents) {}
+
         // scalar
         template<typename T>
-        [[nodiscard]] constexpr std::expected<std::optional<T>, Error> getAs() const {
+        [[nodiscard]] constexpr std::expected<T, Error> getAs() const {
 
         }
 
@@ -43,10 +46,17 @@ namespace struo {
         [[nodiscard]] constexpr auto getElements() {
 
         }
+
+    private:
+        std::string_view contents_;
+
     };
 
+    template<typename T>
+    using ParseResult = std::expected<typename detail::ValueTraits<T>::staged_type, Error>;
+
     template<typename T, typename Parser>
-    std::expected<T, Error> parse_value(Parser&&);
+    ParseResult<T> parse_value(Parser&&);
 
     template<typename Field, typename Parser>
     std::expected<void, Error> parse_field(Field& field, Parser& parser) {
@@ -64,27 +74,77 @@ namespace struo {
 
         auto value = parse_value<value_type>(**child);
         if (!value) {
-            return std::unexpected{child.error()};
+            return std::unexpected{value.error()};
         }
-        field.setValue(value.value());
+        field.setStagedValue(std::move(*value));
 
         return {};
     }
 
     template<typename Object, typename Parser>
     [[nodiscard]] constexpr std::expected<void, Error> parse_object(Object& object, Parser& parser) {
-        return object.forEachField([&](auto& field) {
+        return object.forEachField([&](auto& field) -> std::expected<void, Error> {
             return parse_field(field, parser);
         });
     }
 
+    template<typename Sequence, typename Parser>
+    [[nodiscard]] constexpr ParseResult<Sequence> parse_sequence(Parser& parser) {
+        using staged_type = typename detail::ValueTraits<Sequence>::staged_type;
+        using element_type = typename detail::ValueTraits<Sequence>::element_type;
+
+        auto elements = parser.getElements();
+        if (!elements) {
+            return std::unexpected{elements.error()};
+        }
+
+        staged_type sequence{};
+        for (auto&& element : elements.value()) {
+            auto result = parse_value<element_type>(element);
+            if (!result) {
+                return std::unexpected{result.error()};
+            }
+            sequence.emplace_back(std::move(*result));
+        }
+
+        return sequence;
+    }
+
+    template<typename Map, typename Parser>
+    [[nodiscard]] constexpr ParseResult<Map> parse_map(Parser& parser) {
+        using staged_type = typename detail::ValueTraits<Map>::staged_type;
+        using key_type = typename detail::ValueTraits<Map>::key_type;
+        using mapped_type = typename detail::ValueTraits<Map>::mapped_type;
+
+        auto members = parser.getMembers();
+        if (!members) {
+            return std::unexpected{members.error()};
+        }
+
+        staged_type map{};
+        for (auto&& [key, value] : members.value()) {
+            auto key_result = parse_value<key_type>(key);
+            if (!key_result) {
+                return std::unexpected{key_result.error()};
+            }
+
+            auto mapped_result = parse_value<mapped_type>(value);
+            if (!mapped_result) {
+                return std::unexpected{mapped_result.error()};
+            }
+
+            map.emplace_back(std::move(*key_result), std::move(*mapped_result));
+        }
+
+        return map;
+    }
+
     template<typename T, typename Parser>
-    std::expected<T, Error> parse_value(Parser&& parser) {
+    ParseResult<T> parse_value(Parser&& parser) {
         if constexpr (IsScalar<T>) {
             return parser.template getAs<T>();
         } else if constexpr (IsSequence<T>) {
-            // not implemented
-            // return parse_sequence<T>(std::forward<Parser>(parser));
+            return parse_sequence<T>(parser);
         } else if constexpr (IsMap<T>) {
             // not implemented
             // return parse_map<T>(std::forward<Parser>(parser));
@@ -93,19 +153,18 @@ namespace struo {
             auto object = SchemaTraits<T>::schema();
             auto result = parse_object(object, parser);
             if (!result) {
-                return std::unexpected{object};
+                return std::unexpected{result.error()};
             }
             return object;
         } else {
-            // cleanup later
             static_assert(!sizeof(T),  "unknown Field<T>::value_type");
         }
     }
 
     template<typename Schema, typename Parser>
-    [[nodiscard]] constexpr std::expected<Schema, Error> parse(const std::string& contents, Parser&& parser) {
+    [[nodiscard]] constexpr std::expected<decltype(SchemaTraits<Schema>::schema()), Error> parse(const std::string& contents, Parser&& parser) {
         auto schema_object = SchemaTraits<Schema>::schema();
-        auto result = parse_object(schema_object, std::forward<Parser>(parser));
+        auto result = parse_object(schema_object, parser);
         if (!result) {
             return std::unexpected{result.error()};
         }
