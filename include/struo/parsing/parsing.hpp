@@ -3,10 +3,11 @@
 #include <expected>
 #include <string>
 #include <filesystem>
+#include <magic_enum/magic_enum.hpp>
 
-#include "parsing.hpp"
+#include <yaml-cpp/yaml.h>
+
 #include "struo/Error.hpp"
-
 #include "struo/Object.hpp"
 #include "struo/concepts.hpp"
 #include "struo/definitions.hpp"
@@ -18,38 +19,71 @@ namespace struo {
 
     class YamlParser {
     public:
-        // very minimal interface
-        // users can plug in their own parsers.
-        // Yaml can be extended (e.g., overloads for chrono or what not),
-        // or maybe the function traversing converts say enums -> strings
-        // and chronos -> uints, etc.
+        explicit constexpr YamlParser(YAML::Node node)
+            : node_(std::move(node))  {}
 
-        explicit constexpr YamlParser(std::string_view contents) : contents_(contents) {}
-
-        // scalar
         template<typename T>
-        [[nodiscard]] constexpr std::expected<T, Error> getAs() const {
-
+        [[nodiscard]] std::expected<T, Error> getAs() const {
+            return tryParse<T>([this]() -> T {
+                return node_.as<T>();
+            }, YAML::NodeType::Scalar);
         }
 
-        // child object
-        [[nodiscard]] constexpr std::expected<std::optional<YamlParser>, Error> toChild(std::string_view) const {
-
+        [[nodiscard]] std::expected<std::optional<YamlParser>, Error> toChild(std::string_view name) const {
+            return tryParse<std::optional<YamlParser>>([&]() -> std::optional<YamlParser> {
+                const auto child = node_[name];
+                if (!child) {
+                    return std::nullopt;
+                }
+                return YamlParser { child };
+            });
         }
 
-        // sequence / map? Maybe make separate methods for each? Then a json
-        // parser can convert ints to strings when accessed as keys (as an example)?
-        [[nodiscard]] constexpr auto getMembers() {
-
+        [[nodiscard]] std::expected<std::vector<std::pair<YamlParser, YamlParser>>, Error> getMembers() const {
+            return tryParse<std::vector<std::pair<YamlParser, YamlParser>>>([this] {
+                std::vector<std::pair<YamlParser, YamlParser>> parsers{};
+                for (auto it = node_.begin(); it != node_.end(); ++it) {
+                    parsers.emplace_back(it->first, it->second);
+                }
+                return parsers;
+            }, YAML::NodeType::Map);
         }
 
-        [[nodiscard]] constexpr auto getElements() {
-
+        [[nodiscard]] std::expected<std::vector<YamlParser>, Error> getElements() const {
+            return tryParse<std::vector<YamlParser>>([this]() -> std::vector<YamlParser> {
+                std::vector<YamlParser> parsers{};
+                for (size_t i { 0 }; i < node_.size(); ++i) {
+                    parsers.emplace_back(node_[i]);
+                }
+                return parsers;
+            }, YAML::NodeType::Sequence);
         }
 
     private:
-        std::string_view contents_;
+        template<typename T, typename Callable>
+        requires HasFunctionSignature<Callable, T()>
+        [[nodiscard]] std::expected<T, Error> tryParse(Callable&& callable, std::optional<YAML::NodeType::value> expected_type = std::nullopt) const {
+            try {
+                if (expected_type) {
+                    if (node_.Type() != *expected_type) {
+                        return err(WRONG_TYPE, std::format("expected {}, got {}", detail::enum_name(*expected_type), detail::enum_name(node_.Type())));
+                    }
+                }
 
+                return std::invoke(std::forward<Callable>(callable));
+            } catch (const YAML::ParserException& e) {
+                return err(SYNTAX_ERROR, e.what());
+            } catch (const YAML::BadConversion& e) {
+                return err(INVALID_VALUE, e.what());
+            } catch (const YAML::BadSubscript& e) {
+                return err(WRONG_TYPE, e.what());
+            } catch (const YAML::Exception& e) {
+                return err(PARSE_ERROR, e.what());
+            }
+        }
+
+    private:
+        YAML::Node node_{};
     };
 
     template<typename T>

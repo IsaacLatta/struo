@@ -42,7 +42,7 @@ endif()
 
 target_sources(struo
         PRIVATE
-        src/struo/dummy.cpp)
+        src/struo/detail/detail.cpp)
 
 target_include_directories(struo
         PUBLIC

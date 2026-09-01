@@ -13,7 +13,12 @@ namespace struo {
         FILE_NOT_FOUND,
         OPEN_FILE_FAILED,
         READ_FILE_FAILED,
-        INVALID_ARGUMENT
+        INVALID_ARGUMENT,
+        WRONG_TYPE,
+        KEY_NOT_FOUND,
+        PARSE_ERROR,
+        INVALID_VALUE,
+        SYNTAX_ERROR
     }; using enum ErrorCode;
 
     class Error {

@@ -15,7 +15,7 @@ namespace struo {
     }
 
     template<typename Callable, typename Signature>
-    concept IsInvocable = detail::HasFunctionSignatureImpl<Callable, Signature>::value;
+    concept HasFunctionSignature = detail::HasFunctionSignatureImpl<Callable, Signature>::value;
 
     template<typename T>
     struct IsChronoDuration : std::false_type {};

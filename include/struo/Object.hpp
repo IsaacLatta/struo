@@ -15,7 +15,7 @@ namespace struo {
         explicit constexpr Object(Fields... fields) : fields_{std::move(fields)...} {}
 
         template<typename Callable>
-        requires (IsInvocable<Callable, std::expected<void, Error>(Fields&)> && ...)
+        requires (HasFunctionSignature<Callable, std::expected<void, Error>(Fields&)> && ...)
         constexpr std::expected<void, Error> forEachField(Callable&& callable) {
             std::expected<void, Error> result{};
 
