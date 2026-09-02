@@ -15,14 +15,14 @@ namespace struo {
         explicit constexpr Object(Fields... fields) : fields_{std::move(fields)...} {}
 
         template<typename Callable>
-        requires (HasFunctionSignature<Callable, std::expected<void, Error>(Fields&)> && ...)
-        constexpr std::expected<void, Error> forEachField(Callable&& callable) {
-            std::expected<void, Error> result{};
+        requires (HasFunctionSignature<Callable, Result<void>(Fields&)> && ...)
+        constexpr Result<void> forEachField(Callable&& callable) {
+            Result<void> result{};
 
             std::apply([&](auto&&... fields) {
                 (... && [&]() {
                     result = std::invoke(callable, fields);
-                    return result.has_value();
+                    return result.ok();
                 }());
             }, fields_);
 

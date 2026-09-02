@@ -1,10 +1,9 @@
 #pragma once
 
+#include <cstdio>
 #include <cstdlib>
 #include <format>
-#include <print>
 #include <source_location>
-#include <stacktrace>
 #include <string_view>
 #include <utility>
 
@@ -15,37 +14,33 @@ namespace struo::detail {
         return pos == std::string_view::npos ? path : path.substr(pos + 1);
     }
 
-    [[noreturn]]
-    inline void on_assertion(const std::stacktrace& trace, const std::source_location& where, std::string_view condition) noexcept {
+    template<typename... Args>
+    [[noreturn]] void on_assertion(const std::source_location& where, std::string_view condition, std::format_string<Args...> fmt, Args&&... args) noexcept {
         try {
-            std::println(stderr, "STRUO CHECK FAILED: check {} ", condition);
-            std::println(stderr, "at {}:{} in {}\n{}", file_basename(where.file_name()), where.line(), where.function_name(), trace);
-        }
-        catch (...) {}
+            const auto message = std::format(
+                "STRUO CHECK FAILED: check {} | {} at {}:{} in {}\n",
+                condition,
+                std::format(fmt, std::forward<Args>(args)...),
+                file_basename(where.file_name()),
+                where.line(),
+                where.function_name()
+            );
+
+            std::fputs(message.c_str(), stderr);
+        } catch (...) {}
+
         std::abort();
     }
 
-    template<typename... Args>
-    [[noreturn]] void on_assertion(
-        const std::stacktrace& trace,
-        const std::source_location& where,
-        std::string_view condition,
-        std::format_string<Args...> fmt,
-        Args&&... args) noexcept {
-        try {
-            std::print(stderr, "STRUO CHECK FAILED: check {} | ", condition);
-            std::print(stderr, fmt, std::forward<Args>(args)...);
-            std::println(stderr, " at {}:{} in {}\n{}", file_basename(where.file_name()), where.line(), where.function_name(), trace);
-        }
-        catch (...) {}
-        std::abort();
+    [[noreturn]] inline void on_assertion(const std::source_location& where, std::string_view condition) noexcept {
+        on_assertion(where, condition, "");
     }
+
 }
 
 #define STRUO_CHECK_IMPL(cond, ...) do { \
     if(!(cond)) [[unlikely]] { \
         struo::detail::on_assertion( \
-            std::stacktrace::current(), \
             std::source_location::current(), \
             #cond __VA_OPT__(,) __VA_ARGS__); \
     } \

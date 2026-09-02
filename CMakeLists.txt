@@ -55,7 +55,6 @@ target_link_libraries(struo
         PUBLIC
         yaml-cpp::yaml-cpp
         magic_enum::magic_enum
-        stdc++exp
 
         PUBLIC
         struo_defs
@@ -64,7 +63,7 @@ target_link_libraries(struo
         struo_warnings
 )
 
-target_compile_features(struo PUBLIC cxx_std_23)
+target_compile_features(struo PUBLIC cxx_std_20)
 
 if(STRUO_BUILD_TESTS)
     enable_testing()

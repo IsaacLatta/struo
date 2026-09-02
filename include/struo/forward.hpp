@@ -15,6 +15,8 @@ namespace struo {
 
     class Error;
 
+    class YamlParser;
+
     struct DefaultSchema {};
 
     template<typename T, typename Schema = DefaultSchema>

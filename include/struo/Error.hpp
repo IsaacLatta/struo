@@ -1,10 +1,9 @@
 #pragma once
 
-#include <string>
 #include <source_location>
-#include <expected>
-
-#include "struo/forward.hpp"
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace struo {
 
@@ -24,7 +23,7 @@ namespace struo {
     class Error {
     public:
         constexpr explicit Error(ErrorCode ec, std::string message, std::source_location where = std::source_location::current())
-            : code_(ec), message_(std::move(message)), location_(where) {}
+            : message_(std::move(message)), location_(where), code_(ec) {}
 
         [[nodiscard]] constexpr std::string_view what() const noexcept {
             return message_;
@@ -34,14 +33,14 @@ namespace struo {
             return location_;
         }
 
+        [[nodiscard]] constexpr ErrorCode code() const noexcept {
+            return code_;
+        }
+
     private:
-        ErrorCode code_{}; // maybe std::error_code instead, user can plug in their errors? Then we duplicate "message"?
         std::string message_{};
         std::source_location location_{};
+        ErrorCode code_{};
     };
-
-    [[nodiscard]] constexpr auto err(ErrorCode ec, std::string message, std::source_location where = std::source_location::current()) {
-        return std::unexpected{Error{ec, std::move(message), where}};
-    }
 
 }

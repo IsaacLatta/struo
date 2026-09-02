@@ -5,6 +5,7 @@ add_executable(struo_tests)
 target_sources(struo_tests
         PRIVATE
         unit_yaml_parser.cpp
+        unit_result.cpp
 )
 
 target_include_directories(struo_tests
