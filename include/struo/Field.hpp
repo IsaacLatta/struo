@@ -8,7 +8,7 @@
 namespace struo {
 
     template<auto Member>
-    requires IsSupportedField<decltype(Member)>
+    // requires IsSupportedField<decltype(Member)>
     class Field : public detail::Node<Field<Member>> {
     public:
         using base_type = detail::Node<Field<Member>>;
@@ -29,12 +29,12 @@ namespace struo {
             return staged_value_.has_value();
         }
 
-        [[nodiscard]] constexpr const value_type& getStagedValue() const {
+        [[nodiscard]] constexpr const staged_type& getStagedValue() const {
             STRUO_CHECK(hasStagedValue());
             return staged_value_.value();
         }
 
-        constexpr void setStagedValue(value_type value) {
+        constexpr void setStagedValue(staged_type value) {
             staged_value_ = std::move(value);
         }
 

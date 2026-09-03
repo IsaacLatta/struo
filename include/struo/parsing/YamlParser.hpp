@@ -83,4 +83,6 @@ namespace struo {
 
     };
 
+    using Yaml = YamlParser;
+
 }

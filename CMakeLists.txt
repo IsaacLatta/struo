@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.24)
 project(struo VERSION 0.1 LANGUAGES CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(magic_enum CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 

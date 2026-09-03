@@ -1,9 +1,11 @@
 #pragma once
 
+#include <concepts>
 #include <string>
 #include <filesystem>
 
 #include <magic_enum/magic_enum.hpp>
+#include <type_traits>
 #include <yaml-cpp/yaml.h>
 
 #include "struo/Result.hpp"
@@ -18,6 +20,9 @@
 
 namespace struo {
 
+    template<typename... T>
+    concept AreMutableLValueReferences = ((!std::is_const_v<std::remove_reference_t<T>> && std::is_lvalue_reference_v<T>) && ...);
+
     template<typename T>
     using ParseResult = Result<typename detail::ValueTraits<T>::staged_type>;
 
@@ -29,6 +34,8 @@ namespace struo {
 
     template<typename Field, typename Parser>
     Result<void> parse_field(Field& field, Parser& parser) {
+        static_assert(AreMutableLValueReferences<decltype(field), decltype(parser)>);
+
         using field_type = std::remove_cvref_t<decltype(field)>;
         using value_type = typename field_type::value_type;
 
@@ -38,7 +45,7 @@ namespace struo {
         }
 
         if (!*child) {
-            return {};
+            return ok();
         }
 
         auto value = parse_value<value_type>(**child);
@@ -47,18 +54,24 @@ namespace struo {
         }
         field.setStagedValue(std::move(*value));
 
-        return {};
+        return ok();
     }
 
     template<typename Object, typename Parser>
     [[nodiscard]] constexpr Result<void> parse_object(Object& object, Parser& parser) {
-        return object.forEachField([&](auto& field) {
+        static_assert(AreMutableLValueReferences<decltype(object), decltype(parser)>);
+
+        return object.forEachField([&](auto& field) -> Result<void> {
+            static_assert(AreMutableLValueReferences<decltype(field)>);
+
             return parse_field(field, parser);
         });
     }
 
     template<typename Sequence, typename Parser>
     [[nodiscard]] constexpr ParseResult<Sequence> parse_sequence(Parser& parser) {
+        static_assert(AreMutableLValueReferences<decltype(parser)>);
+
         using staged_type = typename detail::ValueTraits<Sequence>::staged_type;
         using element_type = typename detail::ValueTraits<Sequence>::element_type;
 
@@ -68,7 +81,9 @@ namespace struo {
         }
 
         staged_type sequence{};
-        for (auto&& element : elements.value()) {
+        for (auto& element : elements.value()) {
+            static_assert(AreMutableLValueReferences<decltype(element)>);
+
             auto result = parse_value<element_type>(element);
             if (!result) {
                 return result.error();
@@ -81,6 +96,8 @@ namespace struo {
 
     template<typename Map, typename Parser>
     [[nodiscard]] constexpr ParseResult<Map> parse_map(Parser& parser) {
+        static_assert(AreMutableLValueReferences<decltype(parser)>);
+
         using staged_type = typename detail::ValueTraits<Map>::staged_type;
         using key_type = typename detail::ValueTraits<Map>::key_type;
         using mapped_type = typename detail::ValueTraits<Map>::mapped_type;
@@ -91,7 +108,9 @@ namespace struo {
         }
 
         staged_type map{};
-        for (auto&& [key, value] : members.value()) {
+        for (auto& [key, value] : members.value()) {
+            static_assert(AreMutableLValueReferences<decltype((key)), decltype((value))>);
+
             auto key_result = parse_value<key_type>(key);
             if (!key_result) {
                 return key_result.error();
@@ -115,7 +134,7 @@ namespace struo {
         } else if constexpr (IsSequence<T>) {
             return parse_sequence<T>(parser);
         } else if constexpr (IsMap<T>) {
-            return parse_map<T>(std::forward<Parser>(parser));
+            return parse_map<T>(parser);
         } else if constexpr (IsObject<T>) {
             auto object = SchemaTraits<T>::schema();
             auto result = parse_object(object, parser);
@@ -139,7 +158,7 @@ namespace struo {
     }
 
     template<typename T, typename Schema>
-    [[nodiscard]] constexpr Result<SchemaStage<Schema>> parse_yaml(const std::filesystem::path& path) {
+    [[nodiscard]] Result<SchemaStage<Schema>> parse_yaml(const std::filesystem::path& path) {
         try {
             const auto node = YAML::LoadFile(path.string());
             return parse<T, Schema>(YamlParser { node });

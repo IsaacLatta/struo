@@ -4,7 +4,9 @@
 #include <expected>
 #include <functional>
 
-#include "concepts.hpp"
+#include "struo/forward.hpp"
+#include "struo/concepts.hpp"
+#include "struo/Result.hpp"
 #include "struo/Error.hpp"
 
 namespace struo {
@@ -17,7 +19,22 @@ namespace struo {
         template<typename Callable>
         requires (HasFunctionSignature<Callable, Result<void>(Fields&)> && ...)
         constexpr Result<void> forEachField(Callable&& callable) {
-            Result<void> result{};
+            Result<void> result { ok() };
+
+            std::apply([&](auto&&... fields) {
+                (... && [&]() {
+                    result = std::invoke(callable, fields);
+                    return result.ok();
+                }());
+            }, fields_);
+
+            return result;
+        }
+
+        template<typename Callable>
+        requires (HasFunctionSignature<Callable, Result<void>(const Fields&)> && ...)
+        constexpr Result<void> forEachField(Callable&& callable) const {
+            Result<void> result { ok() };
 
             std::apply([&](auto&&... fields) {
                 (... && [&]() {

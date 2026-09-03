@@ -33,32 +33,32 @@ namespace struo {
         }
 
         [[nodiscard]] constexpr const T& value() const & {
-            STRUO_CHECK(hasValue(), "failed to check: !struo::Result");
+            STRUO_CHECK(ok(), "failed to check: !struo::Result");
             return std::get<0>(storage_);
         }
 
         [[nodiscard]] constexpr T& value() & {
-            STRUO_CHECK(hasValue(), "failed to check: !struo::Result");
+            STRUO_CHECK(ok(), "failed to check: !struo::Result");
             return std::get<0>(storage_);
         }
 
         [[nodiscard]] constexpr T&& value() && {
-            STRUO_CHECK(hasValue(), "failed to check: !struo::Result");
+            STRUO_CHECK(ok(), "failed to check: !struo::Result");
             return std::get<0>(std::move(storage_));
         }
 
         [[nodiscard]] constexpr const Error& error() const & {
-            STRUO_CHECK(!hasValue(), "failed to check: struo::Result");
+            STRUO_CHECK(!ok(), "failed to check: struo::Result");
             return std::get<1>(storage_);
         }
 
         [[nodiscard]] constexpr Error& error() & {
-            STRUO_CHECK(!hasValue(), "failed to check: struo::Result");
+            STRUO_CHECK(!ok(), "failed to check: struo::Result");
             return std::get<1>(storage_);
         }
 
         [[nodiscard]] constexpr Error&& error() && {
-            STRUO_CHECK(!hasValue(), "failed to check: struo::Result");
+            STRUO_CHECK(!ok(), "failed to check: struo::Result");
             return std::get<1>(std::move(storage_));
         }
 
@@ -116,7 +116,7 @@ namespace struo {
         }
 
         [[nodiscard]] constexpr Error&& error() && {
-            STRUO_CHECK(error_.has_value(), "failed to check: struo::Result");
+            STRUO_CHECK(!ok(), "failed to check: struo::Result");
             return std::move(*error_);
         }
 

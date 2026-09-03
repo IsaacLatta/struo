@@ -1,5 +1,7 @@
 #pragma once
+
 #include <concepts>
+#include <chrono>
 
 namespace struo {
     namespace detail {
