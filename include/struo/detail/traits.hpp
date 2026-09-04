@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <type_traits>
+#include <yaml-cpp/emittermanip.h>
 
 #include "struo/concepts.hpp"
 
@@ -21,8 +22,9 @@ namespace struo::detail {
     struct ValueTraits<T> {
         using key_type = typename T::key_type;
         using mapped_type = typename T::mapped_type;
+        using staged_key_type = typename ValueTraits<key_type>::staged_type;
         using staged_mapped_type = typename ValueTraits<mapped_type>::staged_type;
-        using staged_type = std::vector<std::pair<key_type, staged_mapped_type>>;
+        using staged_type = std::vector<std::pair<staged_key_type, staged_mapped_type>>;
     };
 
     template<typename T>

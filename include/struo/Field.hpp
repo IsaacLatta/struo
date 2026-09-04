@@ -12,8 +12,7 @@ namespace struo {
     class Field : public detail::Node<Field<Member>> {
     public:
         using base_type = detail::Node<Field<Member>>;
-        using member_type = decltype(Member);
-        using member_traits = detail::MemberTraits<member_type>;
+        using member_traits = detail::MemberTraits<decltype(Member)>;
         using value_type = typename member_traits::value_type;
         using value_traits = detail::ValueTraits<value_type>;
         using staged_type = typename value_traits::staged_type;
@@ -25,12 +24,17 @@ namespace struo {
             (this->apply(std::forward<Args>(args)), ...);
         }
 
-        [[nodiscard]] constexpr bool hasStagedValue() const noexcept {
+        [[nodiscard]] constexpr bool isStaged() const noexcept {
             return staged_value_.has_value();
         }
 
         [[nodiscard]] constexpr const staged_type& getStagedValue() const {
-            STRUO_CHECK(hasStagedValue());
+            STRUO_CHECK(isStaged());
+            return staged_value_.value();
+        }
+
+        [[nodiscard]] constexpr staged_type& getStagedValue() {
+            STRUO_CHECK(isStaged());
             return staged_value_.value();
         }
 

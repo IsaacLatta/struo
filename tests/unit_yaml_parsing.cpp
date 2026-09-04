@@ -8,6 +8,7 @@
 
 #include "struo/Field.hpp"
 #include "struo/Object.hpp"
+#include "struo/parsing/YamlParser.hpp"
 #include "struo/parsing/parsing.hpp"
 
 namespace {
@@ -90,8 +91,7 @@ replicas:
 }
 
 TEST(ParseTraversal, PropagatesInvalidScalarValue) {
-    YamlParser parser{
-        YAML::Load(R"(
+    YamlParser parser {YAML::Load(R"(
 workers: definitely-not-an-int
 )")
     };
@@ -100,6 +100,15 @@ workers: definitely-not-an-int
 
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code(), INVALID_VALUE);
+}
+
+TEST(Parsing, Instatiate) {
+    auto result = struo::load<Config>(YamlParser {YAML::Load(R"(
+workers: definitely-not-an-int
+)")
+    });
+
+    ASSERT_FALSE(result);
 }
 
 } // namespace

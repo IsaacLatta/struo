@@ -10,6 +10,7 @@
 
 #include "struo/Result.hpp"
 #include "struo/Object.hpp"
+#include "struo/Field.hpp"
 #include "struo/concepts.hpp"
 #include "struo/definitions.hpp"
 
@@ -28,6 +29,9 @@ namespace struo {
 
     template<typename T>
     using SchemaStage = decltype(SchemaTraits<T>::schema());
+
+    template<typename T>
+    using StagedValue = detail::ValueTraits<T>::staged_type;
 
     template<typename T, typename Parser>
     ParseResult<T> parse_value(Parser&&);
@@ -58,7 +62,7 @@ namespace struo {
     }
 
     template<typename Object, typename Parser>
-    [[nodiscard]] constexpr Result<void> parse_object(Object& object, Parser& parser) {
+    constexpr Result<void> parse_object(Object& object, Parser& parser) {
         static_assert(AreMutableLValueReferences<decltype(object), decltype(parser)>);
 
         return object.forEachField([&](auto& field) -> Result<void> {
@@ -68,8 +72,105 @@ namespace struo {
         });
     }
 
+    template<typename T, typename StagedValue>
+    constexpr Result<T> materialize_value(StagedValue&);
+
+    template<typename Sequence, typename StagedValue>
+    constexpr Result<Sequence> materialize_sequence(StagedValue& staged) {
+        using element_type = detail::ValueTraits<Sequence>::element_type;
+
+        Sequence sequence{};
+        for(auto& element : staged) {
+            auto result = materialize_value<element_type>(element);
+            if(!result) {
+                return result.error();
+            }
+            sequence.emplace_back(std::move(*result));
+        }
+
+        return sequence;
+    }
+
+    template<typename Map, typename StagedValue>
+    constexpr Result<Map> materialize_map(StagedValue& staged) {
+        using mapped_type = detail::ValueTraits<Map>::mapped_type;
+        using key_type = detail::ValueTraits<Map>::key_type;
+
+        Map map{};
+        for(auto& [staged_key, staged_mapped] : staged) {
+            auto key = materialize_value<key_type>(staged_key);
+            if(!key) {
+                return key.error();
+            }
+
+            auto mapped = materialize_value<mapped_type>(staged_mapped);
+            if(!mapped) {
+                return mapped.error();
+            }
+
+            map.emplace(std::move(*key), std::move(*mapped));
+        }
+
+        return map;
+    }
+
+    template<typename T, typename StagedValue>
+    constexpr Result<T> materialize_value(StagedValue& staged) {
+        if constexpr (IsScalar<T>) {
+            static_assert(std::same_as<T, StagedValue>);
+            return staged;
+        } else if constexpr (IsMap<T>) {
+            return materialize_map<T>(staged);
+        } else if constexpr (IsSequence<T>) {
+            return materialize_sequence<T>(staged);
+        } else if constexpr (IsObject<T>) {
+            return materialize_object<T>(staged);
+        } else {
+            static_assert(!sizeof(T), "unknown type T");
+        }
+    }
+
+    template<auto Member, typename UserObject>
+    constexpr Result<void> materialize_field(Field<Member>& field, UserObject& object) {
+        using field_type = Field<Member>;
+        using member_object_type = typename field_type::member_traits::object_type;
+        using member_value_type = typename field_type::member_traits::value_type;
+
+        static_assert(AreMutableLValueReferences<decltype(field), decltype(object)>);
+        static_assert(std::same_as<member_object_type, UserObject>);
+
+        if(!field.isStaged()) {
+            return ok();
+        }
+
+        auto value = materialize_value<member_value_type>(field.getStagedValue());
+        if(!value) {
+            return value.error();
+        }
+
+        object.*Member = std::move(*value);
+
+        return ok();
+    }
+
+    template<typename UserObject, typename StagedObject>
+    constexpr Result<UserObject> materialize_object(StagedObject& staged) {
+        UserObject user_object{};
+
+        auto result = staged.forEachField([&](auto& field) -> Result<void> {
+            static_assert(AreMutableLValueReferences<decltype(field)>);
+            return materialize_field(field, user_object);
+        });
+
+        if(!result) {
+            return result.error();
+        }
+
+        return user_object;
+    }
+
     template<typename Sequence, typename Parser>
-    [[nodiscard]] constexpr ParseResult<Sequence> parse_sequence(Parser& parser) {
+    constexpr ParseResult<Sequence> parse_sequence(Parser& parser) {
         static_assert(AreMutableLValueReferences<decltype(parser)>);
 
         using staged_type = typename detail::ValueTraits<Sequence>::staged_type;
@@ -95,7 +196,7 @@ namespace struo {
     }
 
     template<typename Map, typename Parser>
-    [[nodiscard]] constexpr ParseResult<Map> parse_map(Parser& parser) {
+    constexpr ParseResult<Map> parse_map(Parser& parser) {
         static_assert(AreMutableLValueReferences<decltype(parser)>);
 
         using staged_type = typename detail::ValueTraits<Map>::staged_type;
@@ -148,7 +249,7 @@ namespace struo {
     }
 
     template<typename Schema, typename Parser>
-    [[nodiscard]] constexpr Result<SchemaStage<Schema>> parse(Parser&& parser) {
+    constexpr Result<SchemaStage<Schema>> parse(Parser&& parser) {
         auto schema_object = SchemaTraits<Schema>::schema();
         auto result = parse_object(schema_object, parser);
         if (!result) {
@@ -157,29 +258,19 @@ namespace struo {
         return schema_object;
     }
 
-    template<typename T, typename Schema>
-    [[nodiscard]] Result<SchemaStage<Schema>> parse_yaml(const std::filesystem::path& path) {
-        try {
-            const auto node = YAML::LoadFile(path.string());
-            return parse<T, Schema>(YamlParser { node });
-        } catch (const YAML::Exception& e) {
-            return err(PARSE_ERROR, std::format("malformed yaml file: {}", e.what()));
-        }
+    template<typename UserObject>
+    constexpr Result<UserObject> materialize(SchemaStage<UserObject>& staged) {
+        return materialize_object<UserObject>(staged);
     }
 
-    template<typename T, typename Schema>
-    [[nodiscard]] constexpr Result<T> load(const std::filesystem::path& path) {
-        const auto file_format = detail::file_format_from_path(path);
-        if (!file_format) {
-            return file_format.error();
+    template<typename UserObject, typename Parser>
+    constexpr Result<UserObject> load(Parser&& parser) {
+        auto parsed = parse<UserObject>(std::forward<Parser>(parser));
+        if(!parsed) {
+            return parsed.error();
         }
 
-        switch (*file_format) {
-            case FileFormat::YAML:
-                return parse_yaml<T, Schema>(path);
-            default:
-                STRUO_CHECK(false, "unknown file format={}", static_cast<int>(*file_format));
-        }
+        return materialize<UserObject>(*parsed);
     }
 
 }
