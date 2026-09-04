@@ -73,42 +73,114 @@ struct SchemaTraits<Config> {
 namespace {
 
 using namespace struo;
-
-TEST(ParseTraversal, PropagatesWrongSequenceType) {
-    YamlParser parser{
-        YAML::Load(R"(
+TEST(Parsing, PropagatesWrongSequenceType) {
+    auto result = load<Config>(
+        YamlParser{YAML::Load(R"(
 replicas:
   first:
     host: replica-a
     port: 5000
-)")
-    };
-
-    auto result = parse<Config>(parser);
+)")}
+    );
 
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code(), WRONG_TYPE);
 }
 
-TEST(ParseTraversal, PropagatesInvalidScalarValue) {
-    YamlParser parser {YAML::Load(R"(
+TEST(Parsing, PropagatesInvalidScalarValue) {
+    auto result = load<Config>(
+        YamlParser{YAML::Load(R"(
 workers: definitely-not-an-int
-)")
-    };
-
-    auto result = parse<Config>(parser);
+)")}
+    );
 
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code(), INVALID_VALUE);
 }
 
-TEST(Parsing, Instatiate) {
-    auto result = struo::load<Config>(YamlParser {YAML::Load(R"(
-workers: definitely-not-an-int
-)")
-    });
+TEST(Parsing, MaterializesCompleteObject) {
+    auto result = load<Config>(
+        YamlParser{YAML::Load(R"(
+name: production
+workers: 16
 
-    ASSERT_FALSE(result);
+primary:
+  host: primary.local
+  port: 5432
+
+replicas:
+  - host: replica-a.local
+    port: 5433
+  - host: replica-b.local
+    port: 5434
+
+databases:
+  analytics:
+    host: analytics.local
+    port: 6000
+  archive:
+    host: archive.local
+    port: 6001
+)")}
+    );
+
+    ASSERT_TRUE(result);
+
+    const auto& config = *result;
+
+    EXPECT_EQ(config.name, "production");
+    EXPECT_EQ(config.workers, 16);
+
+    EXPECT_EQ(config.primary.host, "primary.local");
+    EXPECT_EQ(config.primary.port, 5432);
+
+    ASSERT_EQ(config.replicas.size(), 2);
+    EXPECT_EQ(config.replicas[0].host, "replica-a.local");
+    EXPECT_EQ(config.replicas[0].port, 5433);
+    EXPECT_EQ(config.replicas[1].host, "replica-b.local");
+    EXPECT_EQ(config.replicas[1].port, 5434);
+
+    ASSERT_EQ(config.databases.size(), 2);
+
+    EXPECT_EQ(
+        config.databases.at("analytics").host,
+        "analytics.local"
+    );
+    EXPECT_EQ(
+        config.databases.at("analytics").port,
+        6000
+    );
+
+    EXPECT_EQ(
+        config.databases.at("archive").host,
+        "archive.local"
+    );
+    EXPECT_EQ(
+        config.databases.at("archive").port,
+        6001
+    );
+}
+
+TEST(Parsing, MissingFieldsRetainDefaultValues) {
+    auto result = load<Config>(
+        YamlParser{YAML::Load(R"(
+name: partial
+)")}
+    );
+
+    ASSERT_TRUE(result);
+
+    const auto& config = *result;
+
+    EXPECT_EQ(config.name, "partial");
+
+    EXPECT_EQ(config.workers, 0);
+
+    EXPECT_TRUE(config.primary.host.empty());
+    EXPECT_EQ(config.primary.port, 0);
+
+    EXPECT_TRUE(config.replicas.empty());
+    EXPECT_TRUE(config.databases.empty());
 }
 
 } // namespace

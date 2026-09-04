@@ -8,7 +8,6 @@
 namespace struo {
 
     template<auto Member>
-    // requires IsSupportedField<decltype(Member)>
     class Field : public detail::Node<Field<Member>> {
     public:
         using base_type = detail::Node<Field<Member>>;
