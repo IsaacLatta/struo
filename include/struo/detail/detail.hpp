@@ -40,20 +40,24 @@ namespace struo::detail {
         using field_type = std::remove_cvref_t<decltype(field)>;
         using value_type = typename field_type::value_type;
 
-        auto child = parser.toChild(field.getKey().value);
-        if (!child) {
-            return child.error();
-        }
+        for(const auto key : field.getKeys()) {
+            auto child = parser.toChild(key);
+            if (!child) {
+                return child.error();
+            }
 
-        if (!*child) {
+            if (!*child) {
+                continue;
+            }
+
+            auto value = parse_value<value_type>(**child);
+            if (!value) {
+                return value.error();
+            }
+
+            field.setStagedValue(std::move(*value));
             return ok();
         }
-
-        auto value = parse_value<value_type>(**child);
-        if (!value) {
-            return value.error();
-        }
-        field.setStagedValue(std::move(*value));
 
         return ok();
     }

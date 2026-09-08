@@ -18,7 +18,7 @@ namespace struo {
 
     public:
         template<typename... Args>
-        requires OneOf<Key, Args...>
+        requires OneOf<Keys, Args...>
         constexpr explicit Field(Args&&... args) {
             (this->apply(std::forward<Args>(args)), ...);
         }
@@ -37,10 +37,6 @@ namespace struo {
             return staged_value_.value();
         }
 
-        [[nodiscard]] auto getAliases() const noexcept {
-            return std::views::all(aliases_);
-        }
-
         constexpr void setStagedValue(staged_type value) {
             staged_value_ = std::move(value);
         }
@@ -49,10 +45,6 @@ namespace struo {
         using base_type::apply;
 
     private:
-        constexpr void apply(Aliases aliases) {
-            std::ranges::move(aliases, std::back_inserter(aliases_));
-        }
-
         template<typename... Constraints>
         constexpr void apply(ValueConstraints<Constraints...> constraints) {
             detail::apply_arg_pack(std::move(constraints), value_constraints_);
@@ -64,7 +56,6 @@ namespace struo {
         }
 
     private:
-        Aliases aliases_{};
         std::optional<staged_type> staged_value_{};
         std::vector<ValueConstraint<value_type>> value_constraints_{};
         std::vector<ValueDefault<value_type>> value_defaults_{};

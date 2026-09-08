@@ -18,34 +18,31 @@ namespace struo {
     template<typename T, typename Schema = DefaultSchema>
     struct Traits;
 
-    using Key = detail::StrongAlias<std::string_view, struct TagKey>;
+    using Keys = detail::TaggedAlias<std::vector<std::string_view>, struct TagKeys>;
 
-    using Alias = detail::StrongAlias<std::string_view, struct TagAlias>;
-    using Aliases = std::vector<Alias>;
-
-    using Description = detail::StrongAlias<std::string_view, struct TagDescription>;
+    using Description = detail::TaggedAlias<std::string_view, struct TagDescription>;
 
     template<typename Object>
-    using ObjectDefault = detail::StrongAlias<std::function<std::optional<typename Object::value_type>(const Object&)>, struct TagObjectDefault>;
+    using ObjectDefault = detail::TaggedAlias<std::function<std::optional<typename Object::value_type>(const Object&)>, struct TagObjectDefault>;
 
     template<typename... Ts>
-    using ObjectDefaults = detail::ArgPack<struct TagObjectDefaults, Ts...>;
+    using ObjectDefaults = detail::TaggedArgPack<struct TagObjectDefaults, Ts...>;
 
     template<typename T>
-    using ValueDefault = detail::StrongAlias<std::function<std::optional<T>()>, struct TagValueDefault>;
+    using ValueDefault = detail::TaggedAlias<std::function<std::optional<T>()>, struct TagValueDefault>;
 
     template<typename... Ts>
-    using ValueDefaults = detail::ArgPack<struct TagValueDefaults, Ts...>;
+    using ValueDefaults = detail::TaggedArgPack<struct TagValueDefaults, Ts...>;
 
     template<typename Object, typename... Ts>
-    using ObjectConstraint = detail::StrongAlias<std::function<std::optional<Error>(const Object&)>, struct TagObjectConstraint>;
+    using ObjectConstraint = detail::TaggedAlias<std::function<std::optional<Error>(const Object&)>, struct TagObjectConstraint>;
 
     template<typename... Ts>
-    using ObjectConstraints = detail::ArgPack<struct TagObjectConstraints, Ts...>;
+    using ObjectConstraints = detail::TaggedArgPack<struct TagObjectConstraints, Ts...>;
 
     template<typename T>
-    using ValueConstraint = detail::StrongAlias<std::function<std::optional<Error>(const T&)>, struct TagObjectConstraint>;
+    using ValueConstraint = detail::TaggedAlias<std::function<std::optional<Error>(const T&)>, struct TagObjectConstraint>;
 
     template<typename... Ts>
-    using ValueConstraints = detail::ArgPack<struct TagValueConstraints, Ts...>;
+    using ValueConstraints = detail::TaggedArgPack<struct TagValueConstraints, Ts...>;
 }

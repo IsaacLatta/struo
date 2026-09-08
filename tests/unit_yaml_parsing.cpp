@@ -36,10 +36,10 @@ struct SchemaTraits<Database> {
     static auto schema() {
         return Object{
             Field<&Database::host>{
-                Key{"host"}
+                Keys{"host", "h"}
             },
             Field<&Database::port>{
-                Key{"port"}
+                Keys{"port", "p"}
             }
         };
     }
@@ -50,19 +50,19 @@ struct SchemaTraits<Config> {
     static auto schema() {
         return Object{
             Field<&Config::name>{
-                Key{"name"}
+                Keys{"name"}
             },
             Field<&Config::workers>{
-                Key{"workers"}
+                Keys{"workers", "threads"}
             },
             Field<&Config::primary>{
-                Key{"primary"}
+                Keys{"primary", "main"}
             },
             Field<&Config::replicas>{
-                Key{"replicas"}
+                Keys{"replicas", "r"}
             },
             Field<&Config::databases>{
-                Key{"databases"}
+                Keys{"databases", "dbs"}
             }
         };
     }
@@ -181,6 +181,46 @@ name: partial
 
     EXPECT_TRUE(config.replicas.empty());
     EXPECT_TRUE(config.databases.empty());
+}
+
+TEST(Parsing, LoadsFieldsUsingAlternateKeys) {
+    auto result = load<Config>(
+        YamlParser{YAML::Load(R"(
+name: production
+threads: 8
+
+main:
+  h: primary.local
+  p: 5432
+
+r:
+  - h: replica-a.local
+    p: 5433
+
+dbs:
+  analytics:
+    h: analytics.local
+    p: 6000
+)")}
+    );
+
+    ASSERT_TRUE(result);
+
+    const auto& config = *result;
+
+    EXPECT_EQ(config.name, "production");
+    EXPECT_EQ(config.workers, 8);
+
+    EXPECT_EQ(config.primary.host, "primary.local");
+    EXPECT_EQ(config.primary.port, 5432);
+
+    ASSERT_EQ(config.replicas.size(), 1);
+    EXPECT_EQ(config.replicas[0].host, "replica-a.local");
+    EXPECT_EQ(config.replicas[0].port, 5433);
+
+    ASSERT_EQ(config.databases.size(), 1);
+    EXPECT_EQ(config.databases.at("analytics").host, "analytics.local");
+    EXPECT_EQ(config.databases.at("analytics").port, 6000);
 }
 
 } // namespace
