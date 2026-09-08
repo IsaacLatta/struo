@@ -9,10 +9,6 @@
 
 namespace struo {
 
-    enum class FileFormat {
-        YAML
-    };
-
     class Error;
 
     class YamlParser;

@@ -33,32 +33,32 @@ namespace struo {
         }
 
         [[nodiscard]] constexpr const T& value() const & {
-            STRUO_CHECK(ok(), "failed to check: !struo::Result");
+            STRUO_ASSERT(ok(), "failed to check: !struo::Result");
             return std::get<0>(storage_);
         }
 
         [[nodiscard]] constexpr T& value() & {
-            STRUO_CHECK(ok(), "failed to check: !struo::Result");
+            STRUO_ASSERT(ok(), "failed to check: !struo::Result");
             return std::get<0>(storage_);
         }
 
         [[nodiscard]] constexpr T&& value() && {
-            STRUO_CHECK(ok(), "failed to check: !struo::Result");
+            STRUO_ASSERT(ok(), "failed to check: !struo::Result");
             return std::get<0>(std::move(storage_));
         }
 
         [[nodiscard]] constexpr const Error& error() const & {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return std::get<1>(storage_);
         }
 
         [[nodiscard]] constexpr Error& error() & {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return std::get<1>(storage_);
         }
 
         [[nodiscard]] constexpr Error&& error() && {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return std::get<1>(std::move(storage_));
         }
 
@@ -106,17 +106,17 @@ namespace struo {
         }
 
         [[nodiscard]] constexpr const Error& error() const & {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return *error_;
         }
 
         [[nodiscard]] constexpr Error& error() & {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return *error_;
         }
 
         [[nodiscard]] constexpr Error&& error() && {
-            STRUO_CHECK(!ok(), "failed to check: struo::Result");
+            STRUO_ASSERT(!ok(), "failed to check: struo::Result");
             return std::move(*error_);
         }
 

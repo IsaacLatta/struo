@@ -27,14 +27,18 @@ namespace struo {
             return staged_value_.has_value();
         }
 
-        [[nodiscard]] constexpr const staged_type& getStagedValue() const {
-            STRUO_CHECK(isStaged());
+        [[nodiscard]] constexpr const staged_type& getStagedValue() const noexcept {
+            STRUO_ASSERT(isStaged());
             return staged_value_.value();
         }
 
-        [[nodiscard]] constexpr staged_type& getStagedValue() {
-            STRUO_CHECK(isStaged());
+        [[nodiscard]] constexpr staged_type& getStagedValue() noexcept {
+            STRUO_ASSERT(isStaged());
             return staged_value_.value();
+        }
+
+        [[nodiscard]] auto getAliases() const noexcept {
+            return std::views::all(aliases_);
         }
 
         constexpr void setStagedValue(staged_type value) {
@@ -45,6 +49,10 @@ namespace struo {
         using base_type::apply;
 
     private:
+        constexpr void apply(Aliases aliases) {
+            std::ranges::move(aliases, std::back_inserter(aliases_));
+        }
+
         template<typename... Constraints>
         constexpr void apply(ValueConstraints<Constraints...> constraints) {
             detail::apply_arg_pack(std::move(constraints), value_constraints_);
@@ -56,6 +64,7 @@ namespace struo {
         }
 
     private:
+        Aliases aliases_{};
         std::optional<staged_type> staged_value_{};
         std::vector<ValueConstraint<value_type>> value_constraints_{};
         std::vector<ValueDefault<value_type>> value_defaults_{};

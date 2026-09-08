@@ -7,6 +7,8 @@ target_sources(struo_tests
         unit_yaml_parsing.cpp
         unit_yaml_parser.cpp
         unit_result.cpp
+        unit_asserts_on.cpp
+        unit_asserts_off.cpp
 )
 
 target_include_directories(struo_tests
