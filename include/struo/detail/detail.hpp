@@ -144,15 +144,27 @@ namespace struo::detail {
         static_assert(std::same_as<member_object_type, UserObject>);
 
         if(!field.isStaged()) {
-            return ok();
-        }
+            for(const auto& default_func : field.getDefaults()) {
+                auto default_value = default_func();
+                if(!default_value.ok()) {
+                    return err(default_value);
+                }
 
-        auto value = materialize_value<member_value_type>(field.getStagedValue());
-        if(!value) {
-            return value.error();
-        }
+                if(!*default_value) {
+                    continue;
+                }
 
-        object.*Member = std::move(*value);
+                object.*Member = std::move(**default_value);
+                break;
+            }
+        } else {
+            auto value = materialize_value<member_value_type>(field.getStagedValue());
+            if(!value) {
+                return value.error();
+            }
+
+            object.*Member = std::move(*value);
+        }
 
         return ok();
     }

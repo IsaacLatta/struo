@@ -1,11 +1,23 @@
 #pragma once
 
 #include "struo/definitions.hpp"
+#include "struo/detail/StrongAlias.hpp"
 #include "struo/forward.hpp"
 #include "struo/detail/Node.hpp"
 #include "struo/detail/traits.hpp"
+#include <type_traits>
 
 namespace struo {
+
+    template<auto V>
+    struct ValueImpl {
+        [[nodiscard]] constexpr auto operator()() const noexcept {
+            return V;
+        }
+    };
+
+    template<auto V>
+    static inline constexpr ValueImpl<V> Value{};
 
     template<auto Member>
     class Field : public detail::Node<Field<Member>> {
@@ -37,6 +49,10 @@ namespace struo {
             return staged_value_.value();
         }
 
+        [[nodiscard]] constexpr auto getDefaults() const noexcept {
+            return std::views::all(defaults_);
+        }
+
         constexpr void setStagedValue(staged_type value) {
             staged_value_ = std::move(value);
         }
@@ -44,21 +60,18 @@ namespace struo {
     private:
         using base_type::apply;
 
-    private:
-        template<typename... Constraints>
-        constexpr void apply(ValueConstraints<Constraints...> constraints) {
-            detail::apply_arg_pack(std::move(constraints), value_constraints_);
-        }
+        using DefaultResult = Result<std::optional<value_type>>;
+        using DefaultFunc = std::function<DefaultResult()>;
 
-        template<typename... Defaults>
-        constexpr void apply(ValueDefaults<Defaults...> defaults) {
-            detail::apply_arg_pack(std::move(defaults), value_defaults_);
+    private:
+        template<typename... Callables>
+        constexpr void apply(Defaults<Callables...> defaults) {
+            detail::apply_and_wrap_arg_func_pack<DefaultResult>(std::move(defaults), defaults_);
         }
 
     private:
         std::optional<staged_type> staged_value_{};
-        std::vector<ValueConstraint<value_type>> value_constraints_{};
-        std::vector<ValueDefault<value_type>> value_defaults_{};
+        std::vector<DefaultFunc> defaults_{};
     };
 
 }

@@ -2,6 +2,7 @@
 
 #include <tuple>
 #include <concepts>
+#include <functional>
 
 namespace struo::detail {
 
@@ -26,10 +27,13 @@ namespace struo::detail {
         constexpr explicit TaggedArgPack(Args... args) : values{std::move(args)...} {}
     };
 
-    template<typename Container, typename Tag, typename... Args>
-    constexpr void apply_arg_pack(TaggedArgPack<Tag, Args...>&& pack, Container& container) {
-        std::apply([&](auto&&... values) {
-            (container.emplace_back(std::move(values)), ...);
+    template<typename ReturnType, typename Container, typename Tag, typename... Callables>
+    constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pack, Container& container) {
+        std::apply([&](auto&&... callable){
+            (container.emplace_back([func = std::forward<decltype(callable)>(callable)]() mutable -> ReturnType {
+                return ReturnType { std::invoke(func) };
+            }), ...);
         }, std::move(pack.values));
     }
+
 }

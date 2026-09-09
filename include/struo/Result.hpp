@@ -124,6 +124,11 @@ namespace struo {
         std::optional<Error> error_{};
     };
 
+    template<typename T>
+    [[nodiscard]] constexpr Error err(Result<T>& result) {
+        return std::move(result).error();
+    }
+
     template<typename... Args>
     requires std::is_constructible_v<Error, Args...>
     [[nodiscard]] constexpr auto err(Args&&... args) {
