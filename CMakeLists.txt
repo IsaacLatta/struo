@@ -16,11 +16,18 @@ add_library(struo::struo ALIAS struo)
 target_compile_definitions(struo_defs
         INTERFACE
         STRUO_VERSION="${PROJECT_VERSION}"
+        STRUO_PLATFORM_LINUX=$<PLATFORM_ID:Linux>
 )
 
 target_sources(struo
         PRIVATE
         src/struo/detail/detail.cpp)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+target_sources(struo
+        PRIVATE
+        src/struo/detail/platform_linux.cpp)
+endif()
 
 target_include_directories(struo
         PUBLIC

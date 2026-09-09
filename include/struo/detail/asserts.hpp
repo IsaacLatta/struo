@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(STRUO_NO_ASSERT)
+    #define STRUO_ASSERT(cond, ...) ((void)0)
+#else // STRUO_NO_ASSERT
+
 #include <cstdio>
 #include <cstdlib>
 #include <format>
@@ -35,5 +39,14 @@ namespace struo::detail {
     [[noreturn]] inline void print_to_stderr_and_abort(const std::source_location& where, std::string_view condition) noexcept {
         print_to_stderr_and_abort(where, condition, "");
     }
-
 }
+
+#define STRUO_ASSERT(cond, ...) do { \
+    if(!(cond)) [[unlikely]] { \
+        ::struo::detail::print_to_stderr_and_abort( \
+            std::source_location::current(), \
+            #cond __VA_OPT__(,) __VA_ARGS__); \
+    } \
+} while (false)
+
+#endif // !STRUO_NO_ASSERT

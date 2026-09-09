@@ -11,7 +11,6 @@
 #include "struo/Object.hpp"
 #include "struo/Field.hpp"
 #include "struo/concepts.hpp"
-#include "struo/definitions.hpp"
 
 namespace struo::detail {
 

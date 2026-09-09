@@ -10,7 +10,7 @@
 
 #include "struo/forward.hpp"
 #include "struo/Error.hpp"
-#include "struo/definitions.hpp"
+#include "struo/detail/asserts.hpp"
 
 namespace struo {
 

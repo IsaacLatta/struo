@@ -1,11 +1,12 @@
 #pragma once
+#include <type_traits>
 
-#include "struo/definitions.hpp"
-#include "struo/detail/StrongAlias.hpp"
 #include "struo/forward.hpp"
+
+#include "struo/detail/StrongAlias.hpp"
+#include "struo/detail/asserts.hpp"
 #include "struo/detail/Node.hpp"
 #include "struo/detail/traits.hpp"
-#include <type_traits>
 
 namespace struo {
 

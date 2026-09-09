@@ -18,7 +18,8 @@ namespace struo {
         PARSE_ERROR,
         INVALID_VALUE,
         SYNTAX_ERROR,
-        ARGUMENT_OUT_OF_RANGE
+        ARGUMENT_OUT_OF_RANGE,
+        NOT_IMPLEMENTED
     }; using enum ErrorCode;
 
     class Error {

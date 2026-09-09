@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "struo/constraints.hpp"
+#include "struo/struo.hpp"
 
 namespace {
 
