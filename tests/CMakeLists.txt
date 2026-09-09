@@ -11,6 +11,7 @@ target_sources(struo_tests
         unit_asserts_off.cpp
         unit_range_constraints.cpp
         unit_size_constraints.cpp
+        unit_platform_constraints.cpp
 )
 
 target_include_directories(struo_tests
