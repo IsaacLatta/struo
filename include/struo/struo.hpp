@@ -7,5 +7,6 @@
 #include "struo/concepts.hpp"
 #include "struo/Field.hpp"
 #include "struo/Result.hpp"
+#include "struo/constraints.hpp"
 
 #include "struo/parsing/parsing.hpp"

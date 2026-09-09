@@ -53,6 +53,10 @@ namespace struo {
             return std::views::all(defaults_);
         }
 
+        [[nodiscard]] constexpr auto getConstraints() const noexcept {
+            return std::views::all(constraints_);
+        }
+
         constexpr void setStagedValue(staged_type value) {
             staged_value_ = std::move(value);
         }
@@ -62,6 +66,7 @@ namespace struo {
 
         using DefaultResult = Result<std::optional<value_type>>;
         using DefaultFunc = std::function<DefaultResult()>;
+        using ConstraintFunc = std::function<Result<void>()>;
 
     private:
         template<typename... Callables>
@@ -69,9 +74,15 @@ namespace struo {
             detail::apply_and_wrap_arg_func_pack<DefaultResult>(std::move(defaults), defaults_);
         }
 
+        template<typename... Callables>
+        constexpr void apply(Constraints<Callables...> constraints) {
+            detail::apply_and_wrap_arg_func_pack<ConstraintFunc>(std::move(constraints), constraints_);
+        }
+
     private:
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};
+        std::vector<ConstraintFunc> constraints_{};
     };
 
 }

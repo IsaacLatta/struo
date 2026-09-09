@@ -17,7 +17,8 @@ namespace struo {
         KEY_NOT_FOUND,
         PARSE_ERROR,
         INVALID_VALUE,
-        SYNTAX_ERROR
+        SYNTAX_ERROR,
+        ARGUMENT_OUT_OF_RANGE
     }; using enum ErrorCode;
 
     class Error {

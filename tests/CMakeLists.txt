@@ -9,6 +9,8 @@ target_sources(struo_tests
         unit_result.cpp
         unit_asserts_on.cpp
         unit_asserts_off.cpp
+        unit_range_constraints.cpp
+        unit_size_constraints.cpp
 )
 
 target_include_directories(struo_tests
