@@ -27,11 +27,15 @@ namespace struo::detail {
         constexpr explicit TaggedArgPack(Args... args) : values{std::move(args)...} {}
     };
 
-    template<typename ReturnType, typename Container, typename Tag, typename... Callables>
+    template<typename ValueType, typename ReturnType, typename Container, typename Tag, typename... Callables>
     constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pack, Container& container) {
         std::apply([&](auto&&... callable){
-            (container.emplace_back([func = std::forward<decltype(callable)>(callable)]() mutable -> ReturnType {
-                return ReturnType { std::invoke(func) };
+            (container.emplace_back([func = std::forward<decltype(callable)>(callable)](auto&&... args) mutable -> ReturnType {
+                if constexpr (std::invocable<decltype(func), decltype(args)...>) {
+                    return ReturnType { std::invoke(func, std::forward<decltype(args)>(args)...) };
+                } else {
+                    return ReturnType { func.template operator()<ValueType>( std::forward<decltype(args)>(args)...) };
+                }
             }), ...);
         }, std::move(pack.values));
     }

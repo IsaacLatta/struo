@@ -14,6 +14,10 @@ namespace struo::detail {
 
     Result<void> is_valid_hostname(const std::string&);
 
+    void set_env_variable(const std::string& key, const std::string& value) noexcept;
+
+    void unset_env_variable(const std::string& key, const std::string& value) noexcept;
+
 #endif // STRUO_PLATFORM_LINUX
 
 }

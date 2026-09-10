@@ -1,6 +1,11 @@
 #pragma once
-#include <type_traits>
 
+#include <ranges>
+#include <type_traits>
+#include <cstdlib>
+
+#include "struo/Error.hpp"
+#include "struo/detail/detail.hpp"
 #include "struo/forward.hpp"
 
 #include "struo/detail/StrongAlias.hpp"
@@ -9,6 +14,16 @@
 #include "struo/detail/traits.hpp"
 
 namespace struo {
+
+    template <size_t N>
+    struct Str {
+        char string[N];
+
+        constexpr Str(const char (&str)[N]) {
+            for (size_t i { 0 }; i < N; ++i)
+                string[i] = str[i];
+        }
+    };
 
     template<auto V>
     struct ValueImpl {
@@ -19,6 +34,27 @@ namespace struo {
 
     template<auto V>
     static inline constexpr ValueImpl<V> Value{};
+
+    template<Str Key>
+    struct FromEnvDefault {
+        template<typename T>
+        constexpr Result<std::optional<T>> operator()() const noexcept {
+            const char* value_raw = std::getenv(Key.string);
+            if(!value_raw) {
+                return err(KEY_NOT_FOUND, std::format("env variable \"{}\" not set", Key.string));
+            }
+            std::string value_as_str { value_raw };
+
+            auto value = detail::from_string<T>(value_as_str);
+            if(!value) {
+                return err(WRONG_TYPE, std::format("fail to convert env variable \"{}\" to type T", Key.string));
+            }
+            return std::optional<T>{*value};
+        }
+    };
+
+    template<Str Key>
+    static inline constexpr auto FromEnv { FromEnvDefault<Key>{} };
 
     template<auto Member>
     class Field : public detail::Node<Field<Member>> {
@@ -67,17 +103,17 @@ namespace struo {
 
         using DefaultResult = Result<std::optional<value_type>>;
         using DefaultFunc = std::function<DefaultResult()>;
-        using ConstraintFunc = std::function<Result<void>()>;
+        using ConstraintFunc = std::function<Result<void>(const value_type&)>;
 
     private:
         template<typename... Callables>
         constexpr void apply(Defaults<Callables...> defaults) {
-            detail::apply_and_wrap_arg_func_pack<DefaultResult>(std::move(defaults), defaults_);
+            detail::apply_and_wrap_arg_func_pack<value_type, DefaultResult>(std::move(defaults), defaults_);
         }
 
         template<typename... Callables>
         constexpr void apply(Constraints<Callables...> constraints) {
-            detail::apply_and_wrap_arg_func_pack<ConstraintFunc>(std::move(constraints), constraints_);
+            detail::apply_and_wrap_arg_func_pack<value_type, Result<void>>(std::move(constraints), constraints_);
         }
 
     private:

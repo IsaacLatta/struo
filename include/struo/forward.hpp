@@ -9,6 +9,11 @@
 
 namespace struo {
 
+    enum class Presence {
+        REQUIRED,
+        OPTIONAL
+    }; using enum Presence;
+
     class Error;
 
     template<typename T>

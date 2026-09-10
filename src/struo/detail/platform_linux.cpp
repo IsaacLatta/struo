@@ -41,7 +41,14 @@ namespace struo::detail {
         return err(INVALID_ARGUMENT, std::format("host name \"{}\" is not valid", hostname));
     }
 
+    void set_env_variable(const std::string& key, const std::string& value) noexcept {
+        static constexpr int replace_if_present { 1 };
+        (void)::setenv(key.c_str(), value.c_str(), replace_if_present);
+    }
 
+    void unset_env_variable(const std::string& key, const std::string& value) noexcept {
+        (void)::unsetenv(key.c_str());
+    }
 }
 
 #endif

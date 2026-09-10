@@ -4,7 +4,7 @@
 
 #include "struo/forward.hpp"
 #include "struo/Result.hpp"
-#include "struo/detail/detail.hpp"
+#include "struo/detail/parsing_impl.hpp"
 
 namespace struo {
 

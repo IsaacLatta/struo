@@ -71,27 +71,27 @@ TYPED_TEST(RangeConstraintTest, SupportsPositiveAndNegativeRanges) {
     }
 }
 
-TYPED_TEST(RangeConstraintTest, GreaterThanIsInclusive) {
+TYPED_TEST(RangeConstraintTest, AtLeastIsInclusive) {
     using T = TypeParam;
 
     constexpr T min = static_cast<T>(10);
 
-    EXPECT_FALSE(AtMost<min>(static_cast<T>(9)));
-    EXPECT_TRUE(AtMost<min>(static_cast<T>(10)));
-    EXPECT_TRUE(AtMost<min>(static_cast<T>(11)));
+    EXPECT_FALSE(AtLeast<min>(static_cast<T>(9)));
+    EXPECT_TRUE(AtLeast<min>(static_cast<T>(10)));
+    EXPECT_TRUE(AtLeast<min>(static_cast<T>(11)));
 }
 
-TYPED_TEST(RangeConstraintTest, LessThanIsInclusive) {
+TYPED_TEST(RangeConstraintTest, AtMostIsInclusive) {
     using T = TypeParam;
 
     constexpr T max = static_cast<T>(10);
 
-    EXPECT_TRUE(AtLeast<max>(static_cast<T>(9)));
-    EXPECT_TRUE(AtLeast<max>(static_cast<T>(10)));
-    EXPECT_FALSE(AtLeast<max>(static_cast<T>(11)));
+    EXPECT_TRUE(AtMost<max>(static_cast<T>(9)));
+    EXPECT_TRUE(AtMost<max>(static_cast<T>(10)));
+    EXPECT_FALSE(AtMost<max>(static_cast<T>(11)));
 
-    if constexpr (std::is_signed_v<T> || std::is_floating_point_v<T>) {
-        EXPECT_TRUE(AtLeast<max>(static_cast<T>(-10)));
+    if constexpr(std::is_signed_v<T> || std::is_floating_point_v<T>) {
+        EXPECT_TRUE(AtMost<max>(static_cast<T>(-10)));
     }
 }
 

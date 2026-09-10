@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <concepts>
+#include <limits.h>
 
 #include "struo/Result.hpp"
 
@@ -42,10 +43,10 @@ namespace struo {
     inline static constexpr auto Range { RangeConstraint<Min, Max>{} };
 
     template<auto Min>
-    inline static constexpr auto AtMost { RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
+    inline static constexpr auto AtLeast { RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
 
     template<auto Max>
-    inline static constexpr auto AtLeast { RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
+    inline static constexpr auto AtMost { RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
 
     template<size_t Min, size_t Max>
     inline static constexpr auto SizeRange { SizeRangeConstraint<Min, Max>{} };

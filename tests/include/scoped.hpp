@@ -1,10 +1,12 @@
 #pragma once
 
+#include "struo/detail/platform.hpp"
 #include <filesystem>
 #include <random>
 #include <format>
 #include <iostream>
 #include <fstream>
+#include <exception>
 
 namespace struo::testlib {
 
@@ -81,5 +83,20 @@ namespace struo::testlib {
         std::filesystem::path path_;
     };
 
+#if STRUO_PLATFORM_LINUX
+    class ScopedEnvVariable {
+    public:
+        ScopedEnvVariable(const std::string& key, const std::string& value) : key_(key), value_(value) {
+            ::struo::detail::set_env_variable(key_, value_);
+        }
 
+        ~ScopedEnvVariable() noexcept {
+            ::struo::detail::unset_env_variable(key_, value_);
+        }
+
+    private:
+        std::string key_{};
+        std::string value_{};
+    };
+#endif
 }

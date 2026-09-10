@@ -12,6 +12,11 @@ namespace struo::detail {
     template<typename Derived>
     class Node {
     public:
+        [[nodiscard]] constexpr std::string_view getPrimaryKey() const noexcept {
+            auto keys = this->getKeys();
+            return std::ranges::empty(keys) ? std::string_view{"<unnamed-field>"} : std::string_view{*std::ranges::begin(keys)};
+        }
+
         [[nodiscard]] constexpr Description getDescription() const noexcept {
             return description_;
         }
@@ -20,8 +25,12 @@ namespace struo::detail {
             return std::ranges::views::all(aliases_.value);
         }
 
+        [[nodiscard]] constexpr bool is(Presence presence) const noexcept {
+            return presence_ == presence;
+        }
+
     protected:
-        constexpr void apply(const Description description) {
+        constexpr void apply(Description description) {
             description_ = description;
         }
 
@@ -29,9 +38,14 @@ namespace struo::detail {
             std::ranges::move(aliases.value, std::back_inserter(aliases_.value));
         }
 
+        constexpr void apply(Presence presence) {
+            presence_ = presence;
+        }
+
     private:
         Keys aliases_{};
         Description description_{};
+        Presence presence_ { OPTIONAL };
     };
 
 }
