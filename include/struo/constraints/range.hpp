@@ -2,7 +2,10 @@
 
 #include <type_traits>
 #include <concepts>
-#include <limits.h>
+#include <limits>
+#include <format>
+#include <string>
+#include <string_view>
 
 #include "struo/Result.hpp"
 
@@ -11,6 +14,14 @@ namespace struo {
     template<auto Min, auto Max>
     requires (std::same_as<decltype(Min), decltype(Max)> && (Min <= Max))
     struct RangeConstraint {
+        static constexpr std::string_view name() {
+            return "range";
+        }
+
+        static std::string description() {
+            return std::format("between {} and {} inclusive", Min, Max);
+        }
+
         using min_type = decltype(Min);
         using max_type = decltype(Max);
 
@@ -24,18 +35,26 @@ namespace struo {
                 return ok();
             }
 
-            return err(ARGUMENT_OUT_OF_RANGE, std::format("range constraint failed: !(min={} <= value={} <= max={})", min, value, max));
+            return err(ARGUMENT_OUT_OF_RANGE, std::format("\"{}\" constraint failed: expected between {} and {} inclusive, got {}", name(), min, max, value));
         }
     };
 
     template<size_t Min, size_t Max>
     struct SizeRangeConstraint {
+        static constexpr std::string_view name() {
+            return "size range";
+        }
+
+        static std::string description() {
+            return std::format("size between {} and {} inclusive", Min, Max);
+        }
+
         Result<void> operator()(const auto& container) const {
             const size_t size = container.size();
             if(size >= Min && size <= Max) {
                 return ok();
             }
-            return err(ARGUMENT_OUT_OF_RANGE, std::format("size constraint failed: !(min={} <= size={} <= max={})", Min, size, Max));
+            return err(ARGUMENT_OUT_OF_RANGE, std::format("\"{}\" constraint failed: expected {}, got size {}", name(), description(), size));
         }
     };
 
