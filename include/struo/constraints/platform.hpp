@@ -65,11 +65,11 @@ namespace struo {
         }
     };
 
-    inline static constexpr auto FileExists { FileExistsConstraint{} };
+    inline constexpr auto FileExists { FileExistsConstraint{} };
 
-    inline static constexpr auto DirectoryExists { DirectoryExistsConstraint{} };
+    inline constexpr auto DirectoryExists { DirectoryExistsConstraint{} };
 
-    inline static constexpr auto IsValidPort { Range<0, 65535> };
+    inline constexpr auto IsValidPort { Range<0, 65535> };
 
 #if STRUO_PLATFORM_LINUX
 
@@ -91,11 +91,11 @@ namespace struo {
         }
     };
 
-    inline static constexpr auto IsValidHostname { IsValidHostnameConstraint{} };
+    inline constexpr auto IsValidHostname { IsValidHostnameConstraint{} };
 
-    inline static constexpr auto IsValidIpv6 { IsValidIpv6Constraint{} };
+    inline constexpr auto IsValidIpv6 { IsValidIpv6Constraint{} };
 
-    inline static constexpr auto IsValidIpv4 { IsValidIpv4Constraint{} };
+    inline constexpr auto IsValidIpv4 { IsValidIpv4Constraint{} };
 
 #endif // STRUO_PLATFORM_LINUX
 

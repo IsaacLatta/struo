@@ -40,25 +40,25 @@ namespace struo {
     };
 
     template<auto Min, auto Max>
-    inline static constexpr auto Range { RangeConstraint<Min, Max>{} };
+    inline constexpr auto Range { RangeConstraint<Min, Max>{} };
 
     template<auto Min>
-    inline static constexpr auto AtLeast { RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
+    inline constexpr auto AtLeast { RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
 
     template<auto Max>
-    inline static constexpr auto AtMost { RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
+    inline constexpr auto AtMost { RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
 
     template<size_t Min, size_t Max>
-    inline static constexpr auto SizeRange { SizeRangeConstraint<Min, Max>{} };
+    inline constexpr auto SizeRange { SizeRangeConstraint<Min, Max>{} };
 
     template<size_t Min>
-    inline static constexpr auto SizeAtLeast { SizeRangeConstraint<Min, std::numeric_limits<size_t>::max()>{} };
+    inline constexpr auto SizeAtLeast { SizeRangeConstraint<Min, std::numeric_limits<size_t>::max()>{} };
 
     template<size_t Max>
-    inline static constexpr auto SizeAtMost { SizeRangeConstraint<std::numeric_limits<size_t>::min(), Max>{} };
+    inline constexpr auto SizeAtMost { SizeRangeConstraint<std::numeric_limits<size_t>::min(), Max>{} };
 
     template<size_t N>
-    inline static constexpr auto SizeExactly { SizeRangeConstraint<N, N>{} };
+    inline constexpr auto SizeExactly { SizeRangeConstraint<N, N>{} };
 
-    inline static constexpr auto NotEmpty { SizeAtLeast<1> };
+    inline constexpr auto NotEmpty { SizeAtLeast<1> };
 }

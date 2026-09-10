@@ -91,14 +91,17 @@ namespace struo {
     };
 
     template<auto... Constraints>
-    static inline constexpr auto Or { OrConstraint<Constraints...>{} };
+    inline constexpr auto Or { OrConstraint<Constraints...>{} };
 
     template<auto... Constraints>
-    static inline constexpr auto And { AndConstraint<Constraints...>{} };
+    inline constexpr auto And { AndConstraint<Constraints...>{} };
 
     template<auto Constraint>
-    static inline constexpr auto Not { NotConstraint<Constraint>{} };
+    inline constexpr auto Not { NotConstraint<Constraint>{} };
 
     template<auto... Constraints>
-    static inline constexpr auto ForEach { ForEachConstraint<Constraints...>{} };
+    inline constexpr auto ExactlyOne { ExactlyOneConstraint<Constraints...>{} };
+
+    template<auto... Constraints>
+    inline constexpr auto ForEach { ForEachConstraint<Constraints...>{} };
 }
