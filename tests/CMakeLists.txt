@@ -13,6 +13,7 @@ target_sources(struo_tests
         unit_size_constraints.cpp
         unit_platform_constraints.cpp
         unit_combinator_constraints.cpp
+        unit_traversal.cpp
 )
 
 target_include_directories(struo_tests

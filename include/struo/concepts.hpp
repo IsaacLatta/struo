@@ -29,7 +29,7 @@ namespace struo {
     struct SchemaTraits;
 
     template<typename Subject, typename... Types>
-    concept OneOf = (0 + (std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>> + ...) == 1);
+    concept IsOneOf = (0 + (std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>> + ...) == 1);
 
     template<typename T>
     concept IsPointerToMember = true;

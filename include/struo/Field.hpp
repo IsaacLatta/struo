@@ -67,7 +67,7 @@ namespace struo {
 
     public:
         template<typename... Args>
-        requires OneOf<Keys, Args...>
+        requires IsOneOf<Keys, Args...>
         constexpr explicit Field(Args&&... args) {
             (this->apply(std::forward<Args>(args)), ...);
         }

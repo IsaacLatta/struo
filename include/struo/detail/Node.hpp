@@ -13,8 +13,10 @@ namespace struo::detail {
     class Node {
     public:
         [[nodiscard]] constexpr std::string_view getPrimaryKey() const noexcept {
-            auto keys = this->getKeys();
-            return std::ranges::empty(keys) ? std::string_view{"<unnamed-field>"} : std::string_view{*std::ranges::begin(keys)};
+            if(parsed_as_key_) {
+                return *parsed_as_key_;
+            }
+            return aliases_.value.empty() ? std::string_view{"<unnamed-field>"} : aliases_.value.front();
         }
 
         [[nodiscard]] constexpr Description getDescription() const noexcept {
@@ -27,6 +29,10 @@ namespace struo::detail {
 
         [[nodiscard]] constexpr bool is(Presence presence) const noexcept {
             return presence_ == presence;
+        }
+
+        void setPrimaryKey(std::string_view key) noexcept {
+            parsed_as_key_ = key;
         }
 
     protected:
@@ -43,6 +49,7 @@ namespace struo::detail {
         }
 
     private:
+        std::optional<std::string_view> parsed_as_key_{};
         Keys aliases_{};
         Description description_{};
         Presence presence_ { OPTIONAL };
