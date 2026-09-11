@@ -14,7 +14,19 @@ namespace struo {
         template<typename Callable, typename Return, typename... Args>
         struct HasFunctionSignatureImpl<Callable, Return(Args...)> :
             std::bool_constant<std::same_as<std::invoke_result_t<Callable&, Args...>, Return>> {};
+
+        template<typename T>
+        struct IsVariantImpl : std::false_type {};
+
+        template<typename... Ts>
+        struct IsVariantImpl<std::variant<Ts...>> : std::true_type {};
     }
+
+    template<typename T>
+    concept IsStringLike = std::convertible_to<const T&, std::string_view>;
+
+    template<typename T>
+    concept IsVariant = detail::IsVariantImpl<std::remove_cvref_t<T>>::value;
 
     template<typename Callable, typename Signature>
     concept HasFunctionSignature = detail::HasFunctionSignatureImpl<Callable, Signature>::value;
@@ -69,7 +81,7 @@ namespace struo {
     };
 
     template<typename T>
-    concept IsObject = HasSchema<T>;
+    concept IsObject = HasSchema<T> && !IsVariant<T>;
 
     template<typename T>
     struct SupportedValue {
@@ -81,7 +93,7 @@ namespace struo {
             if constexpr (IsScalar<underlying> || IsObject<underlying>) {
                 return true;
             } else if constexpr (IsSequence<underlying>) {
-                return SupportedValue<typename underlying::element_type>::value;
+                return SupportedValue<typename underlying::value_type>::value;
             } else if constexpr (IsMap<underlying>) {
                 return SupportedValue<typename underlying::key_type>::value && SupportedValue<typename underlying::mapped_type>::value;
             } else {

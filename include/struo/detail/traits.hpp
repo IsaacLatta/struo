@@ -2,7 +2,7 @@
 
 #include <concepts>
 #include <type_traits>
-#include <yaml-cpp/emittermanip.h>
+#include <variant>
 
 #include "struo/concepts.hpp"
 
@@ -47,5 +47,12 @@ namespace struo::detail {
     struct ValueTraits<T> {
         using schema_type = decltype(SchemaTraits<T>::schema());
         using staged_type = schema_type;
+    };
+
+    template<typename... Ts>
+    struct ValueTraits<std::variant<Ts...>> {
+        using value_type = std::variant<Ts...>;
+        using schema_type = decltype(SchemaTraits<value_type>::schema());
+        using staged_type = std::variant<typename ValueTraits<Ts>::staged_type...>;
     };
 }

@@ -15,6 +15,7 @@
 #include "struo/Field.hpp"
 #include "struo/concepts.hpp"
 #include "struo/detail/context.hpp"
+#include "struo/detail/traits.hpp"
 #include "struo/forward.hpp"
 
 #include "struo/parsing/YamlParser.hpp"
@@ -276,6 +277,51 @@ namespace struo::detail {
         }
 
         return map;
+    }
+
+    template<typename StdVariant, typename Parser>
+    ParseResult<StdVariant> parse_variant(Parser& parser, TraversalContext& context) {
+        using value_traits = detail::ValueTraits<StdVariant>;
+        using staged_type = typename value_traits::staged_type;
+
+        auto variant_schema = SchemaTraits<StdVariant>::schema();
+
+        auto tag_key = parser.toChild(variant_schema.getTagKey());
+        if(!tag_key) {
+            return append_to_err(tag_key.error(), context);
+        }
+
+        if(!*tag_key) {
+            return append_to_err(err(KEY_NOT_FOUND, std::format("missing tag key \"{}\"", variant_schema.getTagKey())), context);
+        }
+
+        auto tag_key_value = (**tag_key).getAs<std::string>();
+        if(!tag_key_value) {
+            return append_to_err(tag_key_value.error(), context);
+        }
+
+        // look up the type associated with the key.
+        auto bindings = variant_schema.getBindings();
+        return std::apply([&](auto&&... binds) -> ParseResult<StdVariant> {
+            std::optional<ParseResult<StdVariant>> result{};
+            auto visit_binding = [&]<typename Binding>(const Binding& bind) {
+                if(Binding::tag == *tag_key_value) {
+                    // attempt to direct parser: toChild and getAs<Binding::value_type>
+                    // construct and return the staged variant.
+                    return false;
+                }
+                return true;
+            };
+
+            (visit_binding(binds) && ...);
+
+            if(!result.has_value()) {
+                return appent_to_err(
+                    err(INVALID_ARGUMENT, std::format("value \"{}\" did not match any bindings", *tag_key_value)),
+                    context);
+            }
+            return *result;
+        }, bindings);
     }
 
     template<typename T, typename Parser>
