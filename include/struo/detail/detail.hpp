@@ -37,6 +37,17 @@ namespace struo::detail {
         return magic_enum::enum_name(t);
     }
 
+
+    template<typename T>
+    requires std::is_enum_v<T> || IsStringLike<T>
+    [[nodiscard]] constexpr std::string_view as_string(T value) {
+        if constexpr (std::is_enum_v<T>) {
+            return detail::enum_name(value);
+        } else {
+            return value;
+        }
+    }
+
     template<typename T>
     [[nodiscard]] constexpr std::string_view name_of() {
         using U = std::remove_cvref_t<T>;

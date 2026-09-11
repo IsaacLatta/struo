@@ -54,5 +54,18 @@ namespace struo::detail {
         using value_type = std::variant<Ts...>;
         using schema_type = decltype(SchemaTraits<value_type>::schema());
         using staged_type = std::variant<typename ValueTraits<Ts>::staged_type...>;
+
+        template<typename T>
+        static constexpr size_t index_of = []() {
+            constexpr bool matches[] = { std::same_as<T, Ts>... };
+            for(size_t i { 0u }; i < sizeof...(Ts); ++i) {
+                if(matches[i]) {
+                    return i;
+                }
+            }
+            return std::numeric_limits<size_t>::max();
+        }();
+
+
     };
 }

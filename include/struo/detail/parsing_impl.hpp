@@ -34,6 +34,9 @@ namespace struo::detail {
     template<typename T, typename Parser>
     ParseResult<T> parse_value(Parser&&, TraversalContext&);
 
+    template<typename StdVariant, typename Parser>
+    ParseResult<StdVariant> parse_variant(Parser&, TraversalContext&);
+
     template<typename Field, typename Parser>
     Result<void> parse_field(Field& field, Parser& parser, TraversalContext& context) {
         static_assert(AreMutableLValueReferences<decltype(field), decltype(parser)>);
@@ -295,32 +298,51 @@ namespace struo::detail {
             return append_to_err(err(KEY_NOT_FOUND, std::format("missing tag key \"{}\"", variant_schema.getTagKey())), context);
         }
 
-        auto tag_key_value = (**tag_key).getAs<std::string>();
+        auto tag_key_value = (**tag_key).template getAs<std::string>();
         if(!tag_key_value) {
             return append_to_err(tag_key_value.error(), context);
         }
 
-        // look up the type associated with the key.
         auto bindings = variant_schema.getBindings();
         return std::apply([&](auto&&... binds) -> ParseResult<StdVariant> {
             std::optional<ParseResult<StdVariant>> result{};
-            auto visit_binding = [&]<typename Binding>(const Binding& bind) {
-                if(Binding::tag == *tag_key_value) {
-                    // attempt to direct parser: toChild and getAs<Binding::value_type>
-                    // construct and return the staged variant.
+            auto visit_binding = [&]<typename Binding>(const Binding& bind) -> bool {
+                using alt_type = typename Binding::value_type;
+                constexpr auto alt_index = value_traits::template index_of<alt_type>;
+
+                if(Binding::tag != *tag_key_value) {
+                    return true;
+                }
+
+                auto content_key = parser.toChild(variant_schema.getContentKey());
+                if(!content_key) {
+                    result = content_key.error();
                     return false;
                 }
-                return true;
+
+                if(!*content_key) {
+                    result = err(KEY_NOT_FOUND, std::format("content key \"{}\" not found in variant", variant_schema.getContentKey()));
+                    return false;
+                }
+
+                auto value_result = parse_value<alt_type>(**content_key, context);
+                if(!value_result) {
+                    result.emplace(std::move(value_result.error()));
+                } else {
+                    result.emplace(staged_type{ std::in_place_index<alt_index>, std::move(*value_result)});
+                }
+
+                return false;
             };
 
             (visit_binding(binds) && ...);
 
             if(!result.has_value()) {
-                return appent_to_err(
+                return append_to_err(
                     err(INVALID_ARGUMENT, std::format("value \"{}\" did not match any bindings", *tag_key_value)),
                     context);
             }
-            return *result;
+            return std::move(*result);
         }, bindings);
     }
 
@@ -336,6 +358,8 @@ namespace struo::detail {
             return parse_sequence<T>(parser, context);
         } else if constexpr (IsMap<T>) {
             return parse_map<T>(parser, context);
+        } else if constexpr (IsVariant<T>) {
+            return parse_variant<T>(parser, context);
         } else if constexpr (IsObject<T>) {
             auto object = SchemaTraits<T>::schema();
             auto result = parse_object(object, parser, context);

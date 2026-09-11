@@ -8,25 +8,16 @@
 
 #include "struo/detail/Node.hpp"
 #include "struo/detail/StrongAlias.hpp"
+#include "struo/detail/detail.hpp"
 
 namespace struo {
 
 using TagKey = detail::TaggedAlias<std::string_view, struct TagTag>;
 using ContentKey = detail::TaggedAlias<std::string_view, struct TagContent>;
 
-template<typename T>
-requires std::is_enum_v<T> || IsStringLike<T>
-[[nodiscard]] constexpr std::string_view as_string(T value) {
-    if constexpr (std::is_enum_v<T>) {
-        return enum_name(value);
-    } else {
-        return value;
-    }
-}
-
 template <auto Tag, typename T>
 struct Bind {
-    static constexpr std::string_view tag = as_string(Tag);
+    static constexpr std::string_view tag = detail::as_string(Tag);
     using value_type = T;
 };
 
