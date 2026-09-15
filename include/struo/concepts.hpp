@@ -2,9 +2,13 @@
 
 #include <concepts>
 #include <chrono>
+#include <variant>
 
 namespace struo {
     namespace detail {
+        template<typename T>
+        inline constexpr bool always_false_v { false };
+
         template<typename T>
         struct MemberTraits;
 
@@ -42,6 +46,9 @@ namespace struo {
 
     template<typename Subject, typename... Types>
     concept IsOneOf = (0 + (std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>> + ...) == 1);
+
+    template<typename Subject, typename... Args>
+    concept AppearsExactlyOnce = ((size_t{0} + ... + size_t{std::same_as<Subject, Args>}) == 1);
 
     template<typename T>
     concept IsPointerToMember = true;

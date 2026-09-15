@@ -9,6 +9,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 
+#include "struo/concepts.hpp"
+
 namespace struo::detail {
 
     template<typename T>
@@ -35,6 +37,16 @@ namespace struo::detail {
     requires std::is_enum_v<T>
     [[nodiscard]] constexpr std::string_view enum_name(T t) {
         return magic_enum::enum_name(t);
+    }
+
+    template<typename T>
+    requires std::is_enum_v<T> || IsStringLike<T>
+    [[nodiscard]] constexpr std::string_view as_string(T value) {
+        if constexpr (std::is_enum_v<T>) {
+            return detail::enum_name(value);
+        } else {
+            return value;
+        }
     }
 
     template<typename T>

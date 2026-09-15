@@ -6,6 +6,7 @@
 #include "struo/concepts.hpp"
 #include "struo/Field.hpp"
 #include "struo/Result.hpp"
+#include "struo/Variant.hpp"
 
 #include "struo/constraints/constraints.hpp"
 
