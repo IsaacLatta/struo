@@ -68,4 +68,17 @@ namespace struo::detail {
             return {};
         }
     }
+
+    template<typename... Bs>
+    [[nodiscard]] constexpr bool all_unique_binding_tags() {
+        constexpr std::array<std::string_view, sizeof...(Bs)> names { Bs::tag... };
+        for(size_t i { 0 }; i < names.size(); ++i) {
+            for(size_t j { i + 1 }; j < names.size(); ++j) {
+                if(names[i] == names[j]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

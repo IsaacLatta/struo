@@ -2,10 +2,12 @@
 
 #include <functional>
 #include <string_view>
+#include <array>
 
 #include "struo/forward.hpp"
 #include "struo/concepts.hpp"
 
+#include "struo/detail/asserts.hpp"
 #include "struo/detail/Node.hpp"
 #include "struo/detail/StrongAlias.hpp"
 #include "struo/detail/detail.hpp"
@@ -30,9 +32,16 @@ inline constexpr ContentKey DefaultContentKey { ContentKey { "value" } };
 template <typename... Bs>
 class Variant {
 public:
+    static_assert(detail::all_unique_binding_tags<Bs...>(), "binding tags must all be unique!");
+
+public:
+    using bindings_type = std::tuple<Bs...>;
+
+public:
     template <typename... Args>
     constexpr explicit Variant(Bindings<Bs...> bindings, Args&&... args) : bindings_{std::move(bindings)}  {
         (apply(std::forward<Args>(args)), ...);
+        STRUO_ASSERT(tag_.value != content_.value, "variant tag and content keys must not match!");
     }
 
     [[nodiscard]] constexpr std::string_view getTagKey() const noexcept {

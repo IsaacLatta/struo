@@ -99,6 +99,10 @@ namespace struo {
         static constexpr bool value = []() {
             if constexpr (IsScalar<underlying> || IsObject<underlying>) {
                 return true;
+            } else if constexpr (IsVariant<underlying>) {
+                return HasSchema<underlying> && []<typename... Ts>(std::type_identity<std::variant<Ts...>>) {
+                    return (SupportedValue<Ts>::value && ...);
+                }(std::type_identity<underlying>{});
             } else if constexpr (IsSequence<underlying>) {
                 return SupportedValue<typename underlying::value_type>::value;
             } else if constexpr (IsMap<underlying>) {

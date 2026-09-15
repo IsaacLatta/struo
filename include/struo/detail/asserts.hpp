@@ -22,7 +22,7 @@ namespace struo::detail {
             };
 
             const auto message = std::format(
-                "STRUO CHECK FAILED: check {} | {} at {}:{} in {}\n",
+                "STRUO ASSERT FAILED: check {} | {} at {}:{} in {}\n",
                 condition,
                 std::format(fmt, std::forward<Args>(args)...),
                 get_file_name(where.file_name()),

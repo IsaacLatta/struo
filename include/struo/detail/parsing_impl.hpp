@@ -135,13 +135,29 @@ namespace struo::detail {
     template<typename Variant, size_t I = 0, typename StagedValue>
     constexpr Result<Variant> materialize_variant(StagedValue& staged, TraversalContext& context) {
         if constexpr (I == std::variant_size_v<Variant>) {
-            return err(INVALID_VALUE, "invalid staged variant index");
+            return append_to_err(err(INVALID_VALUE, "invalid staged variant index"), context);
         } else {
             if (staged.index() != I) {
                 return materialize_variant<Variant, I + 1>(staged, context);
             }
 
             using alt_type = std::variant_alternative_t<I, Variant>;
+
+            auto variant_schema = SchemaTraits<Variant>::schema();
+            std::string_view binding_tag;
+            std::apply([&](const auto&... bindings) {
+                auto find_binding = [&]<typename Binding>(const Binding&) {
+                    if constexpr (std::same_as<alt_type, typename Binding::value_type>) {
+                        binding_tag = Binding::tag;
+                        return true;
+                    }
+                    return false;
+                };
+                (find_binding(bindings) || ...);
+            }, variant_schema.getBindings());
+
+            auto variant_scope = context.enterVariant(binding_tag);
+            auto content_scope = context.enterField(variant_schema.getContentKey());
 
             auto value = materialize_value<alt_type>(std::get<I>(staged), context);
 
@@ -313,18 +329,25 @@ namespace struo::detail {
 
         auto variant_schema = SchemaTraits<StdVariant>::schema();
 
-        auto tag_key = parser.toChild(variant_schema.getTagKey());
-        if(!tag_key) {
-            return append_to_err(tag_key.error(), context);
-        }
+        auto tag_key_value = [&]() -> Result<std::string> {
+            auto tag_scope = context.enterField(variant_schema.getTagKey());
+            auto tag_key = parser.toChild(variant_schema.getTagKey());
+            if(!tag_key) {
+                return append_to_err(tag_key.error(), context);
+            }
 
-        if(!*tag_key) {
-            return append_to_err(err(KEY_NOT_FOUND, std::format("missing tag key \"{}\"", variant_schema.getTagKey())), context);
-        }
+            if(!*tag_key) {
+                return append_to_err(err(KEY_NOT_FOUND, std::format("missing tag key \"{}\"", variant_schema.getTagKey())), context);
+            }
 
-        auto tag_key_value = (**tag_key).template getAs<std::string>();
+            auto value = (**tag_key).template getAs<std::string>();
+            if(!value) {
+                return append_to_err(value.error(), context);
+            }
+            return value;
+        }();
         if(!tag_key_value) {
-            return append_to_err(tag_key_value.error(), context);
+            return tag_key_value.error();
         }
 
         const auto& bindings = variant_schema.getBindings();
@@ -338,14 +361,16 @@ namespace struo::detail {
                     return true;
                 }
 
+                auto variant_scope = context.enterVariant(Binding::tag);
+                auto content_scope = context.enterField(variant_schema.getContentKey());
                 auto content_key = parser.toChild(variant_schema.getContentKey());
                 if(!content_key) {
-                    result = content_key.error();
+                    result = append_to_err(content_key.error(), context);
                     return false;
                 }
 
                 if(!*content_key) {
-                    result = err(KEY_NOT_FOUND, std::format("content key \"{}\" not found in variant", variant_schema.getContentKey()));
+                    result = append_to_err(err(KEY_NOT_FOUND, std::format("content key \"{}\" not found in variant", variant_schema.getContentKey())), context);
                     return false;
                 }
 
@@ -362,6 +387,7 @@ namespace struo::detail {
             (visit_binding(binds) && ...);
 
             if(!result.has_value()) {
+                auto tag_scope = context.enterField(variant_schema.getTagKey());
                 return append_to_err(
                     err(INVALID_ARGUMENT, std::format("value \"{}\" did not match any bindings", *tag_key_value)),
                     context);

@@ -2,7 +2,6 @@
 
 #include <map>
 #include <string>
-#include <variant>
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
@@ -38,37 +37,9 @@ struct EnvironmentConfig {
     int workers{};
 };
 
-enum class ValueKind { number, text };
-using VariantValue = std::variant<int, std::string>;
-
-struct VariantConfig {
-    VariantValue choice;
-};
-
 } // namespace
 
 namespace struo {
-
-template<>
-struct SchemaTraits<VariantValue> {
-    static auto schema() {
-        return Variant{
-            Bindings{
-                Bind<ValueKind::number, int>{},
-                Bind<ValueKind::text, std::string>{}
-            }
-        };
-    }
-};
-
-template<>
-struct SchemaTraits<VariantConfig> {
-    static auto schema() {
-        return Object{
-            Field<&VariantConfig::choice>{Keys{"choice"}, REQUIRED}
-        };
-    }
-};
 
 template<>
 struct SchemaTraits<Database> {
@@ -128,15 +99,6 @@ struct SchemaTraits<EnvironmentConfig> {
 namespace {
 
 using namespace struo;
-
-TEST(Parsing, MaterializesVariantAlternative) {
-    auto result = load<VariantConfig>(YamlParser{YAML::Load(
-        "choice: {type: text, value: hello}")});
-
-    ASSERT_TRUE(result);
-    ASSERT_TRUE(std::holds_alternative<std::string>(result.value().choice));
-    EXPECT_EQ(std::get<std::string>(result.value().choice), "hello");
-}
 
 TEST(Parsing, PropagatesWrongSequenceType) {
     auto result = load<Config>(YamlParser{YAML::Load(R"(

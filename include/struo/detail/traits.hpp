@@ -67,6 +67,26 @@ namespace struo::detail {
             return std::numeric_limits<size_t>::max();
         }();
 
+    private:
+        using bindings_type = typename schema_type::bindings_type;
 
+        template<typename... Bs>
+        static constexpr bool all_alternatives_are_bound_once(std::tuple<Bs...>) {
+            return (AppearsExactlyOnce<Ts, typename Bs::value_type...> && ...);
+        }
+
+        template<typename... Bs>
+        static constexpr bool all_bindings_bind_to_variant_alternative(std::tuple<Bs...>) {
+            return (AppearsExactlyOnce<typename Bs::value_type, Ts...> && ...);
+        }
+
+    public:
+        static_assert(
+            all_alternatives_are_bound_once(bindings_type{}),
+            "Variant schema must bind each destination alternative exactly once");
+
+        static_assert(
+            all_bindings_bind_to_variant_alternative(bindings_type{}),
+            "Each variant binding must be bound to exactly one destination alternative");
     };
 }

@@ -82,6 +82,11 @@ namespace struo::detail {
             return scoped([this] { exitLast(); });
         }
 
+        [[nodiscard]] auto enterVariant(std::string_view binding) {
+            stack_.emplace_back(SegmentType::Variant, std::string{binding});
+            return scoped([this] { exitLast(); });
+        }
+
         [[nodiscard]] constexpr std::string getPath() const {
             std::string path{};
             for(const auto& segment: stack_) {
@@ -90,6 +95,8 @@ namespace struo::detail {
                         path += ".";
                     }
                     path += segment.text;
+                } else if(segment.type == SegmentType::Variant) {
+                    path += std::format("<{}>", segment.text);
                 } else {
                     path += std::format("[{}]", segment.text);
                 }
@@ -101,7 +108,8 @@ namespace struo::detail {
         enum class SegmentType {
             Field,
             Index,
-            MapKey
+            MapKey,
+            Variant
         };
 
         struct Segment {
