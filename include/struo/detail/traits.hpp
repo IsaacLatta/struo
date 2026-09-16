@@ -3,6 +3,7 @@
 #include <concepts>
 #include <type_traits>
 #include <variant>
+#include <optional>
 
 #include "struo/concepts.hpp"
 
@@ -47,6 +48,12 @@ namespace struo::detail {
     struct ValueTraits<T> {
         using schema_type = decltype(SchemaTraits<T>::schema());
         using staged_type = schema_type;
+    };
+
+    template<typename T>
+    struct ValueTraits<std::optional<T>> {
+        using value_type = T;
+        using staged_type = ValueTraits<T>::staged_type;
     };
 
     template<typename... Ts>

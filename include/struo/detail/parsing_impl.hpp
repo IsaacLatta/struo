@@ -172,8 +172,17 @@ namespace struo::detail {
     template<typename T, typename StagedValue>
     constexpr Result<T> materialize_value(StagedValue& staged, TraversalContext& context) {
         if constexpr (IsScalar<T>) {
-            static_assert(std::same_as<T, StagedValue>);
+             static_assert(std::same_as<T, StagedValue>);
             return std::move(staged);
+        } else if constexpr (IsOptional<T>) {
+            using inner_type = typename ValueTraits<T>::value_type;
+
+            auto value = materialize_value<inner_type>(staged, context);
+            if(!value) {
+                return err(value);
+            }
+
+            return T { std::in_place, std::move(*value) };
         } else if constexpr (IsMap<T>) {
             return materialize_map<T>(staged, context);
         } else if constexpr (IsSequence<T>) {
@@ -404,6 +413,9 @@ namespace struo::detail {
                 return append_to_err(result.error(), context);
             }
             return result;
+        } else if constexpr (IsOptional<T>) {
+            using inner_type = typename ValueTraits<T>::value_type;
+            return parse_value<inner_type>(std::forward<Parser>(parser), context);
         } else if constexpr (IsSequence<T>) {
             return parse_sequence<T>(parser, context);
         } else if constexpr (IsMap<T>) {

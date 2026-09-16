@@ -2,7 +2,9 @@
 
 #include <concepts>
 #include <chrono>
+#include <type_traits>
 #include <variant>
+#include <optional>
 
 namespace struo {
     namespace detail {
@@ -24,7 +26,17 @@ namespace struo {
 
         template<typename... Ts>
         struct IsVariantImpl<std::variant<Ts...>> : std::true_type {};
+
+        template<typename T>
+        struct IsOptionalImpl : std::false_type {};
+
+        template<typename T>
+        struct IsOptionalImpl<std::optional<T>> : std::true_type {};
     }
+
+    // TODO: Later expand this to support other libs optiona
+    template<typename T>
+    concept IsOptional = detail::IsOptionalImpl<std::remove_cvref_t<T>>::value;
 
     template<typename T>
     concept IsStringLike = std::convertible_to<const T&, std::string_view>;
@@ -107,6 +119,8 @@ namespace struo {
                 return SupportedValue<typename underlying::value_type>::value;
             } else if constexpr (IsMap<underlying>) {
                 return SupportedValue<typename underlying::key_type>::value && SupportedValue<typename underlying::mapped_type>::value;
+            } else if constexpr (IsOptional<underlying>) {
+                return SupportedValue<typename underlying::value_type>::value;
             } else {
                 return false;
             }

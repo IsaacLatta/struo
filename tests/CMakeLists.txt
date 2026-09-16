@@ -6,6 +6,7 @@ target_sources(struo_tests
         PRIVATE
         unit_yaml_parsing.cpp
         unit_variants.cpp
+        unit_optionals.cpp
         unit_yaml_parser.cpp
         unit_result.cpp
         unit_asserts_on.cpp
