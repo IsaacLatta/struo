@@ -5,9 +5,55 @@
 #include <variant>
 #include <optional>
 
+#include "struo/forward.hpp"
 #include "struo/concepts.hpp"
 
 namespace struo::detail {
+
+    template<typename T>
+    concept IsStringLike = std::convertible_to<const T&, std::string_view>;
+
+    template<typename Domain>
+    struct ReferencesImpl {
+        using domain_type = Domain;
+    };
+
+    template<typename... Domains>
+    struct DefinesImpl {};
+
+    template<typename T>
+    concept HasName = requires {
+        { T::name() } -> std::convertible_to<std::string_view>;
+    };
+
+    template<typename T>
+    concept HasDescription = requires {
+        { T::description() } -> std::convertible_to<std::string_view>;
+    };
+
+    template<typename T>
+    concept HasDomainTraits = requires { sizeof(DomainTraits<T>); };
+
+    template<typename T>
+    [[nodiscard]] constexpr std::string_view domain_name() {
+        if constexpr (HasDomainTraits<T> && HasName<DomainTraits<T>>) {
+            return DomainTraits<T>::name();
+        } else {
+            return "<unnamed-domain>";
+        }
+    }
+
+    struct DomainMetadata {
+        std::string_view name{};
+    };
+
+    template<typename T>
+    inline constexpr DomainMetadata DomainMeta { domain_name<T>() };
+
+    using DomainId = DomainMetadata*;
+
+    template<typename T>
+    inline constexpr DomainId DomainIdOf { &DomainMeta<T> };
 
     template<typename Object, typename Value>
     struct MemberTraits<Value Object::*> {

@@ -13,16 +13,21 @@
 #include "struo/Error.hpp"
 #include "struo/Result.hpp"
 #include "struo/detail/detail.hpp"
+#include "struo/detail/traits.hpp"
 
 namespace struo::detail {
 
-    template<typename Callable>
-    requires std::invocable<Callable&>
+    template<typename... Callables>
+    requires (std::invocable<Callables&> && ...)
     class ScopedGuard {
     public:
-        ScopedGuard(Callable callable) : callable_{std::move(callable)} {}
+        constexpr ScopedGuard(Callables... callable) : callables_{std::move(callable)...} {}
 
-        ~ScopedGuard() { std::invoke(callable_); }
+        constexpr ~ScopedGuard() {
+            std::apply([](auto&... callbacks){
+                (std::invoke(callbacks), ...);
+            }, callables_);
+        }
 
         ScopedGuard(ScopedGuard&&) = delete;
         ScopedGuard& operator=(ScopedGuard&&) = delete;
@@ -30,15 +35,13 @@ namespace struo::detail {
         ScopedGuard(const ScopedGuard&) = delete;
 
     private:
-        Callable callable_;
+        std::tuple<Callables...> callables_;
     };
 
-    [[nodiscard]] auto scoped(auto&& callable) {
-        return ScopedGuard<std::remove_cvref_t<decltype(callable)>> { std::forward<decltype(callable)>(callable) };
+    template<typename... Callables>
+    [[nodiscard]] auto scoped(Callables&&... callables) {
+        return ScopedGuard { std::forward<Callables>(callables)... };
     }
-
-    template<typename T>
-    concept IsStringLike = std::convertible_to<const T&, std::string_view>;
 
     template<typename T>
     [[nodiscard]] constexpr std::string format_key(const T& t) {
@@ -55,6 +58,53 @@ namespace struo::detail {
         }
         return std::string{name};
     }
+
+    template<typename... SubContexts>
+    requires (std::is_default_constructible_v<SubContexts> && ...)
+    class Context {
+    public:
+        Context() = default;
+        ~Context() = default;
+
+        Context(Context&&) = delete;
+        Context& operator=(Context&&) = delete;
+        Context& operator=(const Context&) = delete;
+        Context(const Context&) = delete;
+
+        [[nodiscard]] constexpr auto enterField(std::string_view key) {
+            return notifyAll([&](auto& context) { return context.enterField(key); });
+        }
+
+        template<typename Key>
+        [[nodiscard]] constexpr auto enterMember(const Key& key) {
+            return notifyAll([&](auto& context) { return context.template enterMember<Key>(key); });
+        }
+
+        [[nodiscard]] constexpr auto enterElement(size_t index) {
+            return notifyAll([&](auto& context) { return context.enterElement(index); });
+        }
+
+        [[nodiscard]] constexpr auto enterVariant(std::string_view binding) {
+            return notifyAll([&](auto& context) { return context.enterVariant(binding); });
+        }
+
+        template<typename T>
+        requires IsOneOf<T, SubContexts...>
+        [[nodiscard]] constexpr const T& getSubcontext() const noexcept {
+            return std::get<T>(subcontexts_);
+        }
+
+    private:
+        template<typename Callable>
+        constexpr auto notifyAll(Callable&& callable) {
+            return std::apply([&](auto&... subcontexts){
+                return std::tuple{std::invoke(callable, subcontexts)...};
+            }, subcontexts_);
+        }
+
+    private:
+        std::tuple<SubContexts...> subcontexts_;
+    };
 
     class TraversalContext {
     public:
@@ -132,4 +182,40 @@ namespace struo::detail {
         }
         return error;
     }
+
+    class ResolutionContext {
+    public:
+        constexpr auto enterField(std::string_view field_key) {
+            stack_.emplace_back(field_key);
+            return scoped([this] { existLast(); });
+        }
+
+    private:
+        struct DefinitionGroup {
+            std::string_view node_name{};
+            std::vector<detail::DomainId> definitions{};
+        };
+
+    private:
+        constexpr void exitLast() {
+            if(stack_.empty()) {
+                return;
+            }
+
+            auto last = stack_.back();
+            stack_.pop_back();
+
+            if(definitions_.empty()) {
+                return;
+            }
+
+            if(definitions_.back().node_name == last) {
+                definitions_.pop_back();
+            }
+        }
+
+    private:
+        std::vector<std::string_view> stack_{};
+        std::vector<DefinitionGroup> definitions_{};
+    };
 }

@@ -10,6 +10,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "struo/concepts.hpp"
+#include "struo/detail/traits.hpp"
 
 namespace struo::detail {
 
@@ -18,16 +19,6 @@ namespace struo::detail {
 
     template<typename T>
     using SchemaStage = decltype(SchemaTraits<T>::schema());
-
-    template<typename T>
-    concept HasName = requires {
-        { T::name() } -> std::convertible_to<std::string_view>;
-    };
-
-    template<typename T>
-    concept HasDescription = requires {
-        { T::description() } -> std::convertible_to<std::string_view>;
-    };
 
     template <typename T>
     std::optional<T> from_string(std::string_view str) {

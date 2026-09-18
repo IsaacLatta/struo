@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <ranges>
 #include <type_traits>
 #include <cstdlib>
@@ -16,20 +17,10 @@
 namespace struo {
 
     template<typename Domain>
-    struct ReferencesImpl {
-        using domain_type = Domain;
-    };
-
-    template<typename Domain>
-    inline constexpr auto References { ReferencesImpl<Domain>{} };
+    inline constexpr auto References { detail::ReferencesImpl<Domain>{} };
 
     template<typename... Domains>
-    struct DefinesImpl {
-        using domains_tuple = std::tuple<Domains...>;
-    };
-
-    template<typename... Domains>
-    inline constexpr auto Defines { DefinesImpl<Domains...>{} };
+    inline constexpr auto Defines { detail::DefinesImpl<Domains...>{} };
 
     template <size_t N>
     struct Str {
@@ -132,10 +123,22 @@ namespace struo {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<void>>(std::move(constraints), constraints_);
         }
 
+        template<typename... Domains>
+        constexpr void apply(DefinesImpl<Domains...> definitions) {
+            (definitions_.push_back(detail::DomainIdOf<Domains>), ...);
+        }
+
+        template<typename Domain>
+        constexpr void apply(ReferencesImpl<Domain> reference) {
+            STRUO_ASSERT(!_reference, "attempt to add duplicate references to field!");
+            _reference = detail::DomainIdOf<Domain>;
+        }
+
     private:
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};
         std::vector<ConstraintFunc> constraints_{};
+        std::vector<detail::DomainId> definitions_{};
+        detail::DomainId _reference{};
     };
-
 }
