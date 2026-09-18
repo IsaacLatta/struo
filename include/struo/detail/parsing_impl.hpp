@@ -167,6 +167,7 @@ namespace struo::detail {
             }
             return value;
         }();
+
         if(!tag_key_value) {
             return tag_key_value.error();
         }
@@ -256,5 +257,4 @@ namespace struo::detail {
         }
         return schema_object;
     }
-
 }

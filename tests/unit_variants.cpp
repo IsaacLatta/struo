@@ -365,7 +365,7 @@ TEST(Variants, AssertsOnIdenticalTagAndContentKeys) {
             struo::Bindings{struo::Bind<Kind::NUMBER, int>{}},
             struo::TagKey{"same"}, struo::ContentKey{"same"}
         };
-        (void)schema;
+    (void)schema;
     }()), ".*");
 }
 #endif
