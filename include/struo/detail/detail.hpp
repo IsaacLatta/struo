@@ -13,6 +13,12 @@
 
 namespace struo::detail {
 
+    template<typename... T>
+    concept AreMutableLValueReferences = ((!std::is_const_v<std::remove_reference_t<T>> && std::is_lvalue_reference_v<T>) && ...);
+
+    template<typename T>
+    using SchemaStage = decltype(SchemaTraits<T>::schema());
+
     template<typename T>
     concept HasName = requires {
         { T::name() } -> std::convertible_to<std::string_view>;

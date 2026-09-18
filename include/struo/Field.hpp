@@ -15,6 +15,22 @@
 
 namespace struo {
 
+    template<typename Domain>
+    struct ReferencesImpl {
+        using domain_type = Domain;
+    };
+
+    template<typename Domain>
+    inline constexpr auto References { ReferencesImpl<Domain>{} };
+
+    template<typename... Domains>
+    struct DefinesImpl {
+        using domains_tuple = std::tuple<Domains...>;
+    };
+
+    template<typename... Domains>
+    inline constexpr auto Defines { DefinesImpl<Domains...>{} };
+
     template <size_t N>
     struct Str {
         char string[N];
