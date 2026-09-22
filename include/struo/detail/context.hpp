@@ -39,7 +39,7 @@ namespace struo::detail {
     };
 
     template<typename... Callables>
-    [[nodiscard]] auto scoped(Callables&&... callables) {
+    [[nodiscard]] constexpr auto scoped(Callables&&... callables) {
         return ScopedGuard { std::forward<Callables>(callables)... };
     }
 
@@ -183,11 +183,11 @@ namespace struo::detail {
         return error;
     }
 
-    class ResolutionContext {
+    class DefinitionContext {
     public:
         constexpr auto enterField(std::string_view field_key) {
             stack_.emplace_back(field_key);
-            return scoped([this] { existLast(); });
+            return scoped([this] { exitLast(); });
         }
 
     private:

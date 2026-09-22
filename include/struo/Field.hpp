@@ -105,6 +105,22 @@ namespace struo {
             staged_value_ = std::move(value);
         }
 
+        [[nodiscard]] constexpr bool isReference() const noexcept {
+            return reference_.domain_id_ != nullptr;
+        }
+
+        [[nodiscard]] constexpr bool isDefinition() const noexcept {
+            return !definitions_.empty();
+        }
+
+        [[nodiscard]] constexpr auto getDefinitions() const noexcept {
+            return std::views::all(definitions_);
+        }
+
+        [[nodiscard]] constexpr const detail::Reference& getReference() const noexcept {
+            return reference_;
+        }
+
     private:
         using base_type::apply;
 
@@ -124,14 +140,32 @@ namespace struo {
         }
 
         template<typename... Domains>
-        constexpr void apply(DefinesImpl<Domains...> definitions) {
-            (definitions_.push_back(detail::DomainIdOf<Domains>), ...);
+        constexpr void apply(detail::DefinesImpl<Domains...>) {
+            using map_type = detail::UnwrapOptionalT<value_type>;
+            static_assert(sizeof...(Domains) > 0, "Defines requires at least one domain");
+            static_assert(IsMap<map_type>, "Defines requires a map or optional map field");
+            if constexpr (IsMap<map_type>) {
+                static_assert(detail::IsInstanceKey<typename map_type::key_type>,
+                    "Definition keys must support equality");
+            }
+
+            auto add = [&](detail::DomainId domain) {
+                if(std::ranges::find(definitions_, domain) == definitions_.end()) {
+                    definitions_.push_back(domain);
+                }
+            };
+            (add(detail::DomainIdOf<Domains>), ...);
         }
 
         template<typename Domain>
-        constexpr void apply(ReferencesImpl<Domain> reference) {
-            STRUO_ASSERT(!_reference, "attempt to add duplicate references to field!");
-            _reference = detail::DomainIdOf<Domain>;
+        constexpr void apply(detail::ReferencesImpl<Domain>) {
+            using key_type = detail::UnwrapOptionalT<value_type>;
+            static_assert(detail::IsInstanceKey<key_type>,
+                "Reference keys must support equality");
+            STRUO_ASSERT(!isReference(), "attempt to add duplicate references to field!");
+            if constexpr (detail::IsInstanceKey<key_type>) {
+                reference_ = {detail::DomainIdOf<Domain>, detail::InstanceTypeIdOf<key_type>};
+            }
         }
 
     private:
@@ -139,6 +173,6 @@ namespace struo {
         std::vector<DefaultFunc> defaults_{};
         std::vector<ConstraintFunc> constraints_{};
         std::vector<detail::DomainId> definitions_{};
-        detail::DomainId _reference{};
+        detail::Reference reference_{};
     };
 }

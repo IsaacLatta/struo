@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <memory>
 #include <type_traits>
 #include <variant>
 #include <optional>
@@ -50,10 +51,68 @@ namespace struo::detail {
     template<typename T>
     inline constexpr DomainMetadata DomainMeta { domain_name<T>() };
 
-    using DomainId = DomainMetadata*;
+    using DomainId = const DomainMetadata*;
 
     template<typename T>
     inline constexpr DomainId DomainIdOf { &DomainMeta<T> };
+
+    template<typename T>
+    concept IsInstanceKey = std::equality_comparable<T>;
+
+    struct InstanceTypeMetadata {
+        bool (*equal)(const void*, const void*);
+    };
+
+    using InstanceTypeId = const InstanceTypeMetadata*;
+
+    template<typename T>
+    requires IsInstanceKey<T>
+    inline constexpr InstanceTypeMetadata InstanceMeta {
+        [](const void* lhs, const void* rhs) {
+            return *static_cast<const T*>(lhs) == *static_cast<const T*>(rhs);
+        }
+    };
+
+    template<typename T>
+    inline constexpr InstanceTypeId InstanceTypeIdOf { &InstanceMeta<std::remove_cvref_t<T>> };
+
+    struct DefinitionKey {
+        DomainId domain_{};
+        const void* addr_{};
+        InstanceTypeId type_{};
+
+        [[nodiscard]] bool operator==(const DefinitionKey& other) const {
+            if(domain_ != other.domain_ || type_ != other.type_) {
+                return false;
+            }
+            if(!type_ || !addr_ || !other.addr_) {
+                return addr_ == other.addr_;
+            }
+            return type_->equal(addr_, other.addr_);
+        }
+    };
+
+    template<typename T>
+    requires IsInstanceKey<std::remove_cvref_t<T>> && (!std::is_volatile_v<T>)
+    [[nodiscard]] DefinitionKey make_definition_key(DomainId domain, T& value) {
+        return { domain, std::addressof(value), InstanceTypeIdOf<T> };
+    }
+
+    struct Reference {
+        DomainId domain_id_{};
+        InstanceTypeId type_{};
+    };
+
+    template<typename T>
+    struct UnwrapOptional {
+        using type = T;
+    };
+
+    template<typename T>
+    struct UnwrapOptional<std::optional<T>> : UnwrapOptional<T> {};
+
+    template<typename T>
+    using UnwrapOptionalT = typename UnwrapOptional<std::remove_cvref_t<T>>::type;
 
     template<typename Object, typename Value>
     struct MemberTraits<Value Object::*> {
