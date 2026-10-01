@@ -17,6 +17,7 @@ target_sources(struo_tests
         unit_combinator_constraints.cpp
         unit_traversal.cpp
         unit_reference_metadata.cpp
+        unit_resolution.cpp
 )
 
 target_include_directories(struo_tests

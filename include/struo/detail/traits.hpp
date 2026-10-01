@@ -8,6 +8,7 @@
 
 #include "struo/forward.hpp"
 #include "struo/concepts.hpp"
+#include "struo/detail/asserts.hpp"
 
 namespace struo::detail {
 
@@ -15,12 +16,12 @@ namespace struo::detail {
     concept IsStringLike = std::convertible_to<const T&, std::string_view>;
 
     template<typename Domain>
-    struct ReferencesImpl {
+    struct ReferencesT {
         using domain_type = Domain;
     };
 
     template<typename... Domains>
-    struct DefinesImpl {};
+    struct DefinesT {};
 
     template<typename T>
     concept HasName = requires {
@@ -82,12 +83,13 @@ namespace struo::detail {
         InstanceTypeId type_{};
 
         [[nodiscard]] bool operator==(const DefinitionKey& other) const {
+            STRUO_ASSERT(domain_ & type_ && addr_, "attempt to compare incomplete definition key!");
+            STRUO_ASSERT(other.domain_ & other.type_ && other.addr_, "attempt to compare incomplete definition key!");
+
             if(domain_ != other.domain_ || type_ != other.type_) {
                 return false;
             }
-            if(!type_ || !addr_ || !other.addr_) {
-                return addr_ == other.addr_;
-            }
+
             return type_->equal(addr_, other.addr_);
         }
     };

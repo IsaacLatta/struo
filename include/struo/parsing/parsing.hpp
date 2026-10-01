@@ -7,6 +7,7 @@
 
 #include "struo/detail/parsing_impl.hpp"
 #include "struo/detail/materialization.hpp"
+#include "struo/detail/resolution.hpp"
 
 namespace struo {
 
@@ -17,7 +18,14 @@ namespace struo {
             return parsed.error();
         }
 
-        return detail::materialize<UserObject>(*parsed);
+        auto object = detail::materialize<UserObject>(*parsed);
+        if(!object) {
+            return object.error();
+        }
+        if(auto resolved = detail::resolve(*object, *parsed); !resolved) {
+            return resolved.error();
+        }
+        return object;
     }
 
 }

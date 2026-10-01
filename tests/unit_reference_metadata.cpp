@@ -48,7 +48,7 @@ using namespace struo;
 
 TEST(ReferenceMetadata, UnannotatedFieldHasNoDomains) {
     const Field<&Config::camera> field{Keys{"camera"}};
-    EXPECT_FALSE(field.isDefinition());
+    EXPECT_FALSE(field.hasDefinitions());
     EXPECT_FALSE(field.isReference());
     EXPECT_TRUE(field.getDefinitions().empty());
     EXPECT_EQ(field.getReference().domain_id_, nullptr);
@@ -59,7 +59,7 @@ TEST(ReferenceMetadata, MapPublishesDistinctDomainsOnce) {
     const Field<&Config::cameras> field{
         Keys{"cameras"}, Defines<Cameras, Nodes, Cameras>, Defines<Nodes>
     };
-    ASSERT_TRUE(field.isDefinition());
+    ASSERT_TRUE(field.hasDefinitions());
     EXPECT_FALSE(field.isReference());
     const auto domains = field.getDefinitions();
     ASSERT_EQ(domains.size(), 2u);
@@ -70,7 +70,7 @@ TEST(ReferenceMetadata, MapPublishesDistinctDomainsOnce) {
     EXPECT_EQ(domains[1]->name, "cameras");
 
     const Field<&Config::named> optional_map{Keys{"named"}, Defines<Cameras>};
-    EXPECT_TRUE(optional_map.isDefinition());
+    EXPECT_TRUE(optional_map.hasDefinitions());
 }
 
 TEST(ReferenceMetadata, ReferenceRecordsUnderlyingKeyType) {

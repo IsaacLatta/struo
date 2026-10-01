@@ -6,6 +6,8 @@
 #include <string_view>
 #include <utility>
 #include <type_traits>
+#include <algorithm>
+#include <ranges>
 #include <vector>
 #include <format>
 
@@ -24,18 +26,27 @@ namespace struo::detail {
         constexpr ScopedGuard(Callables... callable) : callables_{std::move(callable)...} {}
 
         constexpr ~ScopedGuard() {
+            if(!active_) {
+                return;
+            }
             std::apply([](auto&... callbacks){
                 (std::invoke(callbacks), ...);
             }, callables_);
         }
 
-        ScopedGuard(ScopedGuard&&) = delete;
+        // Context collects subcontext guards into a tuple, which moves them.
+        // Transfer cleanup ownership so destruction of the moved-from guard
+        // does not pop a scope that is still in use.
+        constexpr ScopedGuard(ScopedGuard&& other)
+            noexcept(std::is_nothrow_move_constructible_v<std::tuple<Callables...>>)
+            : callables_{std::move(other.callables_)}, active_{std::exchange(other.active_, false)} {}
         ScopedGuard& operator=(ScopedGuard&&) = delete;
         ScopedGuard& operator=(const ScopedGuard&) = delete;
         ScopedGuard(const ScopedGuard&) = delete;
 
     private:
         std::tuple<Callables...> callables_;
+        bool active_{true};
     };
 
     template<typename... Callables>
@@ -60,7 +71,6 @@ namespace struo::detail {
     }
 
     template<typename... SubContexts>
-    requires (std::is_default_constructible_v<SubContexts> && ...)
     class Context {
     public:
         Context() = default;
@@ -70,6 +80,10 @@ namespace struo::detail {
         Context& operator=(Context&&) = delete;
         Context& operator=(const Context&) = delete;
         Context(const Context&) = delete;
+
+        [[nodiscard]] constexpr auto enterObject() {
+            return notifyAll([](auto& context) { return context.enterObject(); });
+        }
 
         [[nodiscard]] constexpr auto enterField(std::string_view key) {
             return notifyAll([&](auto& context) { return context.enterField(key); });
@@ -94,9 +108,15 @@ namespace struo::detail {
             return std::get<T>(subcontexts_);
         }
 
+        template<typename T>
+        requires IsOneOf<T, SubContexts...>
+        [[nodiscard]] constexpr T& getSubcontext() noexcept {
+            return std::get<T>(subcontexts_);
+        }
+
     private:
         template<typename Callable>
-        constexpr auto notifyAll(Callable&& callable) {
+        [[nodiscard]] constexpr auto notifyAll(Callable&& callable) {
             return std::apply([&](auto&... subcontexts){
                 return std::tuple{std::invoke(callable, subcontexts)...};
             }, subcontexts_);
@@ -115,6 +135,11 @@ namespace struo::detail {
         TraversalContext& operator=(TraversalContext&&) = delete;
         TraversalContext& operator=(const TraversalContext&) = delete;
         TraversalContext(const TraversalContext&) = delete;
+
+        [[nodiscard]] auto enterObject() {
+            static constexpr auto no_op = [](){};
+            return scoped(no_op);
+        }
 
         [[nodiscard]] auto enterField(std::string_view key) {
             stack_.emplace_back(SegmentType::Field, format_field_name(key));
@@ -185,37 +210,53 @@ namespace struo::detail {
 
     class DefinitionContext {
     public:
-        constexpr auto enterField(std::string_view field_key) {
-            stack_.emplace_back(field_key);
-            return scoped([this] { exitLast(); });
+        [[nodiscard]] auto enterScope() {
+            scopes_.emplace_back();
+            return scoped([this] { scopes_.pop_back(); });
+        }
+
+        [[nodiscard]] auto enterObject() {
+            return enterScope();
+        }
+
+        [[nodiscard]] auto enterField(std::string_view) { 
+            return enterScope(); 
+        }
+
+        template<typename Key>
+        [[nodiscard]] auto enterMember(const Key&) { 
+            return enterScope(); 
+        }
+        
+        [[nodiscard]] auto enterElement(size_t) { 
+            return enterScope(); 
+        }
+
+        [[nodiscard]] auto enterVariant(std::string_view) { 
+            return enterScope(); 
+        }
+
+        template<typename DomainRange, typename Map>
+        void addDefinitions(const DomainRange& domains, const Map& map) {
+            STRUO_ASSERT(!scopes_.empty(), "attempt to add definitions before entering node!");
+            for(auto domain : domains) {
+                for(const auto& [key, value] : map) {
+                    scopes_.back().push_back(make_definition_key(domain, key));
+                }
+            }
+        }
+
+        [[nodiscard]] bool contains(const DefinitionKey& key) const {
+            // Search innermost first, but keep searching outer scopes if the
+            // same domain exists here without the requested key. 
+            // DefinitionKey checks domain and type before comparing key values;
+            // a type mismatch cannot invoke equality on incompatible addresses.
+            return std::ranges::any_of(scopes_ | std::views::reverse, [&](const auto& scope) {
+                return std::ranges::find(scope, key) != scope.end();
+            });
         }
 
     private:
-        struct DefinitionGroup {
-            std::string_view node_name{};
-            std::vector<detail::DomainId> definitions{};
-        };
-
-    private:
-        constexpr void exitLast() {
-            if(stack_.empty()) {
-                return;
-            }
-
-            auto last = stack_.back();
-            stack_.pop_back();
-
-            if(definitions_.empty()) {
-                return;
-            }
-
-            if(definitions_.back().node_name == last) {
-                definitions_.pop_back();
-            }
-        }
-
-    private:
-        std::vector<std::string_view> stack_{};
-        std::vector<DefinitionGroup> definitions_{};
+        std::vector<std::vector<DefinitionKey>> scopes_{};
     };
 }

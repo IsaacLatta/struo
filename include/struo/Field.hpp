@@ -17,10 +17,10 @@
 namespace struo {
 
     template<typename Domain>
-    inline constexpr auto References { detail::ReferencesImpl<Domain>{} };
+    inline constexpr auto References { detail::ReferencesT<Domain>{} };
 
     template<typename... Domains>
-    inline constexpr auto Defines { detail::DefinesImpl<Domains...>{} };
+    inline constexpr auto Defines { detail::DefinesT<Domains...>{} };
 
     template <size_t N>
     struct Str {
@@ -33,14 +33,14 @@ namespace struo {
     };
 
     template<auto V>
-    struct ValueImpl {
+    struct ValueT {
         [[nodiscard]] constexpr auto operator()() const noexcept {
             return V;
         }
     };
 
     template<auto V>
-    static inline constexpr ValueImpl<V> Value{};
+    static inline constexpr ValueT<V> Value{};
 
     template<Str Key>
     struct FromEnvDefault {
@@ -109,7 +109,7 @@ namespace struo {
             return reference_.domain_id_ != nullptr;
         }
 
-        [[nodiscard]] constexpr bool isDefinition() const noexcept {
+        [[nodiscard]] constexpr bool hasDefinitions() const noexcept {
             return !definitions_.empty();
         }
 
@@ -140,7 +140,7 @@ namespace struo {
         }
 
         template<typename... Domains>
-        constexpr void apply(detail::DefinesImpl<Domains...>) {
+        constexpr void apply(detail::DefinesT<Domains...>) {
             using map_type = detail::UnwrapOptionalT<value_type>;
             static_assert(sizeof...(Domains) > 0, "Defines requires at least one domain");
             static_assert(IsMap<map_type>, "Defines requires a map or optional map field");
@@ -158,7 +158,7 @@ namespace struo {
         }
 
         template<typename Domain>
-        constexpr void apply(detail::ReferencesImpl<Domain>) {
+        constexpr void apply(detail::ReferencesT<Domain>) {
             using key_type = detail::UnwrapOptionalT<value_type>;
             static_assert(detail::IsInstanceKey<key_type>,
                 "Reference keys must support equality");
