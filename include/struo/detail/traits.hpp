@@ -83,8 +83,8 @@ namespace struo::detail {
         InstanceTypeId type_{};
 
         [[nodiscard]] bool operator==(const DefinitionKey& other) const {
-            STRUO_ASSERT(domain_ & type_ && addr_, "attempt to compare incomplete definition key!");
-            STRUO_ASSERT(other.domain_ & other.type_ && other.addr_, "attempt to compare incomplete definition key!");
+            STRUO_ASSERT(domain_ && type_ && addr_, "attempt to compare incomplete definition key!");
+            STRUO_ASSERT(other.domain_ && other.type_ && other.addr_, "attempt to compare incomplete definition key!");
 
             if(domain_ != other.domain_ || type_ != other.type_) {
                 return false;

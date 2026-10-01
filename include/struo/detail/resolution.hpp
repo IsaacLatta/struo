@@ -73,14 +73,11 @@ namespace struo::detail {
     template<typename Object, typename Schema>
     Result<void> resolve_object(const Object& object, const Schema& schema, ResolutionContext& context) {
         auto& definitions = context.getSubcontext<DefinitionContext>();
-        auto on_exit = definitions.enterScope();
+        auto on_exit = context.enterObject();
 
-        // Pass 1: publish every immediate defining map before checking any
+        // First, publish every immediate defining map before checking any
         // references. This permits sibling references regardless of schema
-        // declaration order. Member is the pointer-to-member carried by Field;
-        // object.*Member accesses the final value rather than its staging slot.
-        // This callback cannot fail; forEachField requires Result<void> even
-        // though this collection pass only appends borrowed definition keys.
+        // declaration order.
         (void)schema.forEachField([&]<auto Member>(const Field<Member>& field) -> Result<void> {
             if(field.hasDefinitions()) {
                 inspect_definitions_at_level(object.*Member, field.getDefinitions(), definitions);

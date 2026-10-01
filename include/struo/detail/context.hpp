@@ -219,21 +219,22 @@ namespace struo::detail {
             return enterScope();
         }
 
-        [[nodiscard]] auto enterField(std::string_view) { 
-            return enterScope(); 
+        // Definitions belong to object scopes; these events only change the path.
+        [[nodiscard]] auto enterField(std::string_view) {
+            return scoped([] {});
         }
 
         template<typename Key>
-        [[nodiscard]] auto enterMember(const Key&) { 
-            return enterScope(); 
-        }
-        
-        [[nodiscard]] auto enterElement(size_t) { 
-            return enterScope(); 
+        [[nodiscard]] auto enterMember(const Key&) {
+            return scoped([] {});
         }
 
-        [[nodiscard]] auto enterVariant(std::string_view) { 
-            return enterScope(); 
+        [[nodiscard]] auto enterElement(size_t) {
+            return scoped([] {});
+        }
+
+        [[nodiscard]] auto enterVariant(std::string_view) {
+            return scoped([] {});
         }
 
         template<typename DomainRange, typename Map>
