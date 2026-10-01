@@ -21,6 +21,7 @@ namespace struo {
     class Result;
 
     class YamlParser;
+    class JsonParser;
 
     struct DefaultSchema {};
 

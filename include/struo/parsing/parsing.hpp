@@ -9,6 +9,9 @@
 #include "struo/detail/materialization.hpp"
 #include "struo/detail/resolution.hpp"
 
+#include "struo/parsing/JsonParser.hpp"
+#include "struo/parsing/YamlParser.hpp"
+
 namespace struo {
 
     template<typename UserObject, typename Parser>
@@ -22,9 +25,11 @@ namespace struo {
         if(!object) {
             return object.error();
         }
+
         if(auto resolved = detail::resolve(*object, *parsed); !resolved) {
             return resolved.error();
         }
+
         return object;
     }
 

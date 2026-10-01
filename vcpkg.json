@@ -4,6 +4,8 @@
   "dependencies": [
     "magic-enum",
     "gtest",
-    "yaml-cpp"
+    "yaml-cpp",
+    "nlohmann-json",
+    "tomlplusplus"
   ]
 }

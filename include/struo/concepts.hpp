@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <chrono>
+#include <filesystem>
 #include <type_traits>
 #include <variant>
 #include <optional>
@@ -23,10 +24,7 @@ template<typename Callable, typename Signature>
 concept HasFunctionSignature = detail::HasFunctionSignatureImpl<Callable, Signature>::value;
 
 template<typename T>
-struct IsChronoDuration : std::false_type {};
-
-template<typename Rep, typename Period>
-struct IsChronoDuration<std::chrono::duration<Rep, Period>> : std::true_type {};
+concept IsChronoDuration = detail::IsChronoDurationImpl<std::remove_cvref_t<T>>::value;
 
 template<typename T>
 struct SchemaTraits;
@@ -41,7 +39,8 @@ template<typename T>
 concept IsScalar = std::is_arithmetic_v<std::remove_cvref_t<T>> ||
     std::is_enum_v<std::remove_cvref_t<T>> ||
     std::same_as<std::remove_cvref_t<T>, std::string> ||
-    IsChronoDuration<T>::value_type;
+    IsChronoDuration<T> ||
+    std::same_as<std::remove_cvref_t<T>, std::filesystem::path>;
 
 template<typename T>
 concept IsSequence = requires {

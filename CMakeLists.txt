@@ -5,6 +5,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(magic_enum CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 option(STRUO_BUILD_TESTS "Build struo tests" ${PROJECT_IS_TOP_LEVEL})
 
@@ -40,7 +42,9 @@ target_link_libraries(struo
         PUBLIC
         yaml-cpp::yaml-cpp
         magic_enum::magic_enum
-
+        nlohmann_json::nlohmann_json
+        tomlplusplus::tomlplusplus
+        
         PUBLIC
         struo_defs
 

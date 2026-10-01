@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <functional>
@@ -41,6 +42,12 @@ struct HasFunctionSignatureImpl : std::false_type {};
 template<typename Callable, typename Return, typename... Args>
 struct HasFunctionSignatureImpl<Callable, Return(Args...)> :
     std::bool_constant<std::same_as<std::invoke_result_t<Callable&, Args...>, Return>> {};
+
+template<typename T>
+struct IsChronoDurationImpl : std::false_type {};
+
+template<typename Rep, typename Period>
+struct IsChronoDurationImpl<std::chrono::duration<Rep, Period>> : std::true_type {};
 
 template<typename T>
 struct IsVariantImpl : std::false_type {};

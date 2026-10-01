@@ -3,6 +3,7 @@
 #include <string_view>
 #include <optional>
 #include <functional>
+#include <filesystem>
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
@@ -20,9 +21,29 @@ namespace struo {
         explicit YamlParser(YAML::Node node) : node_(std::move(node))  {}
 
         template<typename T>
+        requires (!IsChronoDuration<T> && !std::same_as<T, std::filesystem::path>)
         [[nodiscard]] Result<T> getAs() const {
             return tryParse<T>([this] {
                 return node_.as<T>();
+            }, YAML::NodeType::Scalar);
+        }
+
+        template<typename T>
+        requires IsChronoDuration<T>
+        [[nodiscard]] Result<T> getAs() const {
+            auto count = getAs<typename T::rep>();
+            if(!count) {
+                return count.error();
+            }
+            return T{*count};
+        }
+
+        template<typename T>
+        requires std::same_as<T, std::filesystem::path>
+        [[nodiscard]] Result<T> getAs() const {
+            return tryParse<T>([this] {
+                const auto text = node_.as<std::string>();
+                return T{std::u8string(text.begin(), text.end())};
             }, YAML::NodeType::Scalar);
         }
 
@@ -67,6 +88,8 @@ namespace struo {
                     }
                 }
                 return std::invoke(std::forward<Callable>(callable));
+            } catch(const std::filesystem::filesystem_error& e) {
+                return err(INVALID_VALUE, e.what());
             } catch (const YAML::ParserException& e) {
                 return err(SYNTAX_ERROR, e.what());
             } catch (const YAML::BadConversion& e) {

@@ -8,6 +8,8 @@ target_sources(struo_tests
         unit_variants.cpp
         unit_optionals.cpp
         unit_yaml_parser.cpp
+        unit_json_parser.cpp
+        unit_scalar_types.cpp
         unit_result.cpp
         unit_asserts_on.cpp
         unit_asserts_off.cpp
