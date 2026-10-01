@@ -7,7 +7,6 @@
 #include <string>
 #include <string_view>
 
-#include "struo/Error.hpp"
 #include "struo/Result.hpp"
 #include "struo/constraints/range.hpp"
 

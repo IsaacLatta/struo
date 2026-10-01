@@ -5,63 +5,15 @@
 #include <type_traits>
 #include <cstdlib>
 
-#include "struo/Error.hpp"
-#include "struo/detail/detail.hpp"
 #include "struo/forward.hpp"
+#include "struo/defaults.hpp"
 
-#include "struo/detail/StrongAlias.hpp"
+#include "struo/detail/detail.hpp"
 #include "struo/detail/asserts.hpp"
 #include "struo/detail/Node.hpp"
 #include "struo/detail/traits.hpp"
 
 namespace struo {
-
-    template<typename Domain>
-    inline constexpr auto References { detail::ReferencesT<Domain>{} };
-
-    template<typename... Domains>
-    inline constexpr auto Defines { detail::DefinesT<Domains...>{} };
-
-    template <size_t N>
-    struct Str {
-        char string[N];
-
-        constexpr Str(const char (&str)[N]) {
-            for (size_t i { 0 }; i < N; ++i)
-                string[i] = str[i];
-        }
-    };
-
-    template<auto V>
-    struct ValueT {
-        [[nodiscard]] constexpr auto operator()() const noexcept {
-            return V;
-        }
-    };
-
-    template<auto V>
-    static inline constexpr ValueT<V> Value{};
-
-    template<Str Key>
-    struct FromEnvDefault {
-        template<typename T>
-        constexpr Result<std::optional<T>> operator()() const noexcept {
-            const char* value_raw = std::getenv(Key.string);
-            if(!value_raw) {
-                return err(KEY_NOT_FOUND, std::format("env variable \"{}\" not set", Key.string));
-            }
-            std::string value_as_str { value_raw };
-
-            auto value = detail::from_string<T>(value_as_str);
-            if(!value) {
-                return err(WRONG_TYPE, std::format("fail to convert env variable \"{}\" to type T", Key.string));
-            }
-            return std::optional<T>{*value};
-        }
-    };
-
-    template<Str Key>
-    static inline constexpr auto FromEnv { FromEnvDefault<Key>{} };
 
     template<auto Member>
     class Field : public detail::Node<Field<Member>> {

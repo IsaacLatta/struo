@@ -9,7 +9,7 @@
 
 #include "struo/detail/asserts.hpp"
 #include "struo/detail/Node.hpp"
-#include "struo/detail/StrongAlias.hpp"
+#include "struo/detail/types.hpp"
 #include "struo/detail/detail.hpp"
 
 namespace struo {

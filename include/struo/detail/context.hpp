@@ -12,7 +12,6 @@
 #include <format>
 
 #include "struo/concepts.hpp"
-#include "struo/Error.hpp"
 #include "struo/Result.hpp"
 #include "struo/detail/detail.hpp"
 #include "struo/detail/traits.hpp"

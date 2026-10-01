@@ -7,7 +7,6 @@
 #include "struo/forward.hpp"
 #include "struo/concepts.hpp"
 #include "struo/Result.hpp"
-#include "struo/Error.hpp"
 
 namespace struo {
 

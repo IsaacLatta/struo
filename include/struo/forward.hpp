@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 
-#include "detail/StrongAlias.hpp"
+#include "struo/detail/types.hpp"
 
 namespace struo {
 

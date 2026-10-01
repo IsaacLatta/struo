@@ -10,7 +10,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <variant>
 
-#include "struo/Error.hpp"
 #include "struo/Result.hpp"
 #include "struo/Object.hpp"
 #include "struo/Field.hpp"

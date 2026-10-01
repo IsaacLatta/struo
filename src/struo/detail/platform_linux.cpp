@@ -1,7 +1,7 @@
 #if STRUO_PLATFORM_LINUX
 
 #include "struo/detail/platform.hpp"
-#include "struo/Error.hpp"
+
 #include "struo/Result.hpp"
 
 #include <arpa/inet.h>

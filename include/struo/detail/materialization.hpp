@@ -11,13 +11,12 @@
 #include <variant>
 
 #include "struo/forward.hpp"
-#include "struo/Error.hpp"
 #include "struo/Result.hpp"
 #include "struo/Field.hpp"
 #include "struo/concepts.hpp"
+
 #include "struo/detail/context.hpp"
 #include "struo/detail/traits.hpp"
-
 #include "struo/detail/detail.hpp"
 
 namespace struo::detail {
