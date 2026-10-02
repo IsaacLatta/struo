@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <variant>
 #include <optional>
+#include <array>
 
 #include "struo/forward.hpp"
 #include "struo/concepts.hpp"
@@ -138,4 +139,10 @@ public:
         all_bindings_bind_to_variant_alternative(bindings_type{}),
         "Each variant binding must be bound to exactly one destination alternative");
 };
+
+template<typename... Domains> 
+constexpr std::array<DomainId, sizeof...(Domains)> domain_ids_of(DefinesT<Domains...> domains) {
+    return std::array<DomainId, sizeof...(Domains)> { DomainIdOf<Domains>... }; 
+}
+
 }
