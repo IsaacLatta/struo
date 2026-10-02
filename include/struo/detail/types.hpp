@@ -62,65 +62,12 @@ struct IsOptionalImpl : std::false_type {};
 template<typename T>
 struct IsOptionalImpl<std::optional<T>> : std::true_type {};    
 
-template<typename Domain>
-struct ReferencesT {
-    using domain_type = Domain;
-};
-
 template<auto V>
 struct ValueT {
     [[nodiscard]] constexpr auto operator()() const noexcept {
         return V;
     }
 };
-
-template<typename... Domains>
-struct DefinesT {};
-
-struct DomainMetadata {
-    std::string_view name{};
-};
-
-using DomainId = const DomainMetadata*;
-
-struct InstanceTypeMetadata {
-    bool (*equal)(const void*, const void*);
-};
-
-using InstanceTypeId = const InstanceTypeMetadata*;
-
-struct DefinitionKey {
-    DomainId domain_{};
-    const void* addr_{};
-    InstanceTypeId type_{};
-
-    [[nodiscard]] bool operator==(const DefinitionKey& other) const {
-        STRUO_ASSERT(domain_ && type_ && addr_, "attempt to compare incomplete definition key!");
-        STRUO_ASSERT(other.domain_ && other.type_ && other.addr_, "attempt to compare incomplete definition key!");
-
-        if(domain_ != other.domain_ || type_ != other.type_) {
-            return false;
-        }
-
-        return type_->equal(addr_, other.addr_);
-    }
-};
-
-struct Reference {
-    DomainId domain_id_{};
-    InstanceTypeId type_{};
-};
-
-template<typename T>
-struct UnwrapOptional {
-    using type = T;
-};
-
-template<typename T>
-struct UnwrapOptional<std::optional<T>> : UnwrapOptional<T> {};
-
-template<typename T>
-using UnwrapOptionalT = typename UnwrapOptional<std::remove_cvref_t<T>>::type;
 
 template<typename T, typename Tag>
 struct TaggedAlias {

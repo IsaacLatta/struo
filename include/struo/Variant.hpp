@@ -9,7 +9,6 @@
 #include "struo/defaults.hpp"
 
 #include "struo/detail/asserts.hpp"
-#include "struo/detail/Node.hpp"
 #include "struo/detail/types.hpp"
 #include "struo/detail/detail.hpp"
 
@@ -18,13 +17,10 @@ namespace struo {
 using TagKey = detail::TaggedAlias<std::string_view, struct TagTag>;
 using ContentKey = detail::TaggedAlias<std::string_view, struct TagContent>;
 
-template <auto Tag, typename T, auto Definitions = Defines<>>
+template <auto Tag, typename T>
 struct Bind {
     using value_type = T;
-    using definitions_type = std::remove_cvref_t<decltype(Definitions)>;
-
     static constexpr std::string_view tag = detail::as_string(Tag);
-    static constexpr auto domain_ids = detail::domain_ids_of(Definitions);
 };
 
 template<typename... Bs>

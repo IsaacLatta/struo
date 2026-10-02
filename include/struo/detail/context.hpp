@@ -33,12 +33,9 @@ namespace struo::detail {
             }, callables_);
         }
 
-        // Context collects subcontext guards into a tuple, which moves them.
-        // Transfer cleanup ownership so destruction of the moved-from guard
-        // does not pop a scope that is still in use.
-        constexpr ScopedGuard(ScopedGuard&& other)
-            noexcept(std::is_nothrow_move_constructible_v<std::tuple<Callables...>>)
+        constexpr ScopedGuard(ScopedGuard&& other) noexcept(std::is_nothrow_move_constructible_v<std::tuple<Callables...>>)
             : callables_{std::move(other.callables_)}, active_{std::exchange(other.active_, false)} {}
+
         ScopedGuard& operator=(ScopedGuard&&) = delete;
         ScopedGuard& operator=(const ScopedGuard&) = delete;
         ScopedGuard(const ScopedGuard&) = delete;
@@ -207,56 +204,4 @@ namespace struo::detail {
         return error;
     }
 
-    class DefinitionContext {
-    public:
-        [[nodiscard]] auto enterScope() {
-            scopes_.emplace_back();
-            return scoped([this] { scopes_.pop_back(); });
-        }
-
-        [[nodiscard]] auto enterObject() {
-            return enterScope();
-        }
-
-        // Definitions belong to object scopes; these events only change the path.
-        [[nodiscard]] auto enterField(std::string_view) {
-            return scoped([] {});
-        }
-
-        template<typename Key>
-        [[nodiscard]] auto enterMember(const Key&) {
-            return scoped([] {});
-        }
-
-        [[nodiscard]] auto enterElement(size_t) {
-            return scoped([] {});
-        }
-
-        [[nodiscard]] auto enterVariant(std::string_view) {
-            return scoped([] {});
-        }
-
-        template<typename DomainRange, typename Map>
-        void addDefinitions(const DomainRange& domains, const Map& map) {
-            STRUO_ASSERT(!scopes_.empty(), "attempt to add definitions before entering node!");
-            for(auto domain : domains) {
-                for(const auto& [key, value] : map) {
-                    scopes_.back().push_back(make_definition_key(domain, key));
-                }
-            }
-        }
-
-        [[nodiscard]] bool contains(const DefinitionKey& key) const {
-            // Search innermost first, but keep searching outer scopes if the
-            // same domain exists here without the requested key. 
-            // DefinitionKey checks domain and type before comparing key values;
-            // a type mismatch cannot invoke equality on incompatible addresses.
-            return std::ranges::any_of(scopes_ | std::views::reverse, [&](const auto& scope) {
-                return std::ranges::find(scope, key) != scope.end();
-            });
-        }
-
-    private:
-        std::vector<std::vector<DefinitionKey>> scopes_{};
-    };
 }

@@ -20,38 +20,6 @@
 
 namespace struo::detail {
 
-template<typename T>
-[[nodiscard]] constexpr std::string_view domain_name() {
-    if constexpr (HasDomainTraits<T> && HasName<DomainTraits<T>>) {
-        return DomainTraits<T>::name();
-    } else {
-        return "<unnamed-domain>";
-    }
-}
-
-template<typename T>
-requires IsInstanceKey<T>
-inline constexpr InstanceTypeMetadata InstanceMeta {
-    [](const void* lhs, const void* rhs) {
-        return *static_cast<const T*>(lhs) == *static_cast<const T*>(rhs);
-    }
-};
-
-template<typename T>
-inline constexpr DomainMetadata DomainMeta { domain_name<T>() };
-
-template<typename T>
-inline constexpr DomainId DomainIdOf { &DomainMeta<T> };
-
-template<typename T>
-inline constexpr InstanceTypeId InstanceTypeIdOf { &InstanceMeta<std::remove_cvref_t<T>> };
-
-template<typename T>
-requires IsInstanceKey<std::remove_cvref_t<T>> && (!std::is_volatile_v<T>)
-[[nodiscard]] DefinitionKey make_definition_key(DomainId domain, T& value) {
-    return { domain, std::addressof(value), InstanceTypeIdOf<T> };
-}
-
 template<typename Object, typename Value>
 struct MemberTraits<Value Object::*> {
     using value_type = Value;
@@ -139,10 +107,5 @@ public:
         all_bindings_bind_to_variant_alternative(bindings_type{}),
         "Each variant binding must be bound to exactly one destination alternative");
 };
-
-template<typename... Domains> 
-constexpr std::array<DomainId, sizeof...(Domains)> domain_ids_of(DefinesT<Domains...> domains) {
-    return std::array<DomainId, sizeof...(Domains)> { DomainIdOf<Domains>... }; 
-}
 
 }

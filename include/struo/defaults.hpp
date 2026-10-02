@@ -33,16 +33,10 @@ struct FromEnvT {
 
 namespace struo {
 
-template<typename Domain>
-inline constexpr auto References { detail::ReferencesT<Domain>{} };
-
-template<typename... Domains>
-inline constexpr auto Defines { detail::DefinesT<Domains...>{} };
-
 template<auto V>
 static inline constexpr detail::ValueT<V> Value{};
 
 template<Str Key>
-static inline constexpr auto FromEnv { detail::FromEnvT<Key>{} };
+static inline constexpr detail::FromEnvT<Key> FromEnv{};
 
 }

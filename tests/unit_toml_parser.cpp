@@ -164,7 +164,6 @@ TEST(TomlParser, AcceptsEmptyContainers) {
     EXPECT_TRUE(members.value().empty());
 }
 
-struct TomlTargets {};
 struct TomlUse { std::string target; };
 using TomlChoice = std::variant<int, TomlUse>;
 enum class TomlKind { NUMBER, USE };
@@ -181,7 +180,7 @@ namespace struo {
 template<>
 struct SchemaTraits<TomlUse> {
     static auto schema() {
-        return Object{Field<&TomlUse::target>{Keys{"target"}, References<TomlTargets>}};
+        return Object{Field<&TomlUse::target>{Keys{"target"}}};
     }
 };
 
@@ -198,7 +197,7 @@ struct SchemaTraits<TomlConfig> {
         return Object{
             Field<&TomlConfig::name>{Keys{"name", "label"}, Defaults{[] { return "default"; }}},
             Field<&TomlConfig::choice>{Keys{"choice"}},
-            Field<&TomlConfig::targets>{Keys{"targets"}, Defines<TomlTargets>}
+            Field<&TomlConfig::targets>{Keys{"targets"}}
         };
     }
 };
@@ -207,7 +206,7 @@ struct SchemaTraits<TomlConfig> {
 
 namespace {
 
-TEST(TomlParser, LoadsVariantsReferencesAliasesAndDefaults) {
+TEST(TomlParser, LoadsVariantsAliasesAndDefaults) {
     const auto result = load<TomlConfig>(TomlParser{toml::parse(R"(
         label = "struo"
         choice = {type = "USE", value = {target = "front"}}
@@ -221,11 +220,11 @@ TEST(TomlParser, LoadsVariantsReferencesAliasesAndDefaults) {
     EXPECT_EQ(defaults.value().name, "default");
 }
 
-TEST(TomlParser, ReportsReferenceErrorsWithVariantPaths) {
+TEST(TomlParser, ReportsTypeErrorsWithVariantPaths) {
     const auto result = load<TomlConfig>(TomlParser{toml::parse(
-        R"(choice = {type = "USE", value = {target = "missing"}})")});
+        R"(choice = {type = "USE", value = {target = []}})")});
     ASSERT_FALSE(result);
-    EXPECT_EQ(result.error().code(), KEY_NOT_FOUND);
+    EXPECT_EQ(result.error().code(), WRONG_TYPE);
     EXPECT_TRUE(result.error().what().starts_with("choice<USE>.value.target: ")) << result.error().what();
 }
 

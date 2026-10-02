@@ -4,21 +4,20 @@
 #include <ranges>
 #include <type_traits>
 #include <cstdlib>
+#include <iterator>
 
 #include "struo/forward.hpp"
 #include "struo/defaults.hpp"
 
 #include "struo/detail/detail.hpp"
 #include "struo/detail/asserts.hpp"
-#include "struo/detail/Node.hpp"
 #include "struo/detail/traits.hpp"
 
 namespace struo {
 
     template<auto Member>
-    class Field : public detail::Node<Field<Member>> {
+    class Field {
     public:
-        using base_type = detail::Node<Field<Member>>;
         using member_traits = detail::MemberTraits<decltype(Member)>;
         using value_type = typename member_traits::value_type;
         using value_traits = detail::ValueTraits<value_type>;
@@ -57,30 +56,47 @@ namespace struo {
             staged_value_ = std::move(value);
         }
 
-        [[nodiscard]] constexpr bool isReference() const noexcept {
-            return reference_.domain_id_ != nullptr;
+        [[nodiscard]] constexpr std::string_view getPrimaryKey() const noexcept {
+            if(parsed_as_key_) {
+                return *parsed_as_key_;
+            }
+            return aliases_.value.empty() ? std::string_view{"<unnamed-field>"} : aliases_.value.front();
         }
 
-        [[nodiscard]] constexpr bool hasDefinitions() const noexcept {
-            return !definitions_.empty();
+        [[nodiscard]] constexpr Description getDescription() const noexcept {
+            return description_;
         }
 
-        [[nodiscard]] constexpr auto getDefinitions() const noexcept {
-            return std::views::all(definitions_);
+        [[nodiscard]] constexpr auto getKeys() const noexcept {
+            return std::ranges::views::all(aliases_.value);
         }
 
-        [[nodiscard]] constexpr const detail::Reference& getReference() const noexcept {
-            return reference_;
+        [[nodiscard]] constexpr bool is(Presence presence) const noexcept {
+            return presence_ == presence;
+        }
+
+        void setPrimaryKey(std::string_view key) noexcept {
+            parsed_as_key_ = key;
         }
 
     private:
-        using base_type::apply;
-
         using DefaultResult = Result<std::optional<value_type>>;
         using DefaultFunc = std::function<DefaultResult()>;
         using ConstraintFunc = std::function<Result<void>(const value_type&)>;
 
     private:
+        constexpr void apply(Description description) {
+            description_ = description;
+        }
+
+        constexpr void apply(Keys aliases) {
+            std::ranges::move(aliases.value, std::back_inserter(aliases_.value));
+        }
+
+        constexpr void apply(Presence presence) {
+            presence_ = presence;
+        }
+
         template<typename... Callables>
         constexpr void apply(Defaults<Callables...> defaults) {
             detail::apply_and_wrap_arg_func_pack<value_type, DefaultResult>(std::move(defaults), defaults_);
@@ -91,40 +107,13 @@ namespace struo {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<void>>(std::move(constraints), constraints_);
         }
 
-        template<typename... Domains>
-        constexpr void apply(detail::DefinesT<Domains...>) {
-            using map_type = detail::UnwrapOptionalT<value_type>;
-            static_assert(sizeof...(Domains) > 0, "Defines requires at least one domain");
-            static_assert(IsMap<map_type>, "Defines requires a map or optional map field");
-            if constexpr (IsMap<map_type>) {
-                static_assert(detail::IsInstanceKey<typename map_type::key_type>,
-                    "Definition keys must support equality");
-            }
-
-            auto add = [&](detail::DomainId domain) {
-                if(std::ranges::find(definitions_, domain) == definitions_.end()) {
-                    definitions_.push_back(domain);
-                }
-            };
-            (add(detail::DomainIdOf<Domains>), ...);
-        }
-
-        template<typename Domain>
-        constexpr void apply(detail::ReferencesT<Domain>) {
-            using key_type = detail::UnwrapOptionalT<value_type>;
-            static_assert(detail::IsInstanceKey<key_type>,
-                "Reference keys must support equality");
-            STRUO_ASSERT(!isReference(), "attempt to add duplicate references to field!");
-            if constexpr (detail::IsInstanceKey<key_type>) {
-                reference_ = {detail::DomainIdOf<Domain>, detail::InstanceTypeIdOf<key_type>};
-            }
-        }
-
     private:
+        Keys aliases_{};
+        Description description_{};
+        Presence presence_ { OPTIONAL };
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};
         std::vector<ConstraintFunc> constraints_{};
-        std::vector<detail::DomainId> definitions_{};
-        detail::Reference reference_{};
+        std::optional<std::string_view> parsed_as_key_{};
     };
 }

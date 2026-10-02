@@ -7,7 +7,6 @@
 
 #include "struo/detail/parsing_impl.hpp"
 #include "struo/detail/materialization.hpp"
-#include "struo/detail/resolution.hpp"
 
 #include "struo/parsing/JsonParser.hpp"
 #include "struo/parsing/YamlParser.hpp"
@@ -20,17 +19,7 @@ namespace struo {
         if(!parsed) {
             return parsed.error();
         }
-
-        auto object = detail::materialize<UserObject>(*parsed);
-        if(!object) {
-            return object.error();
-        }
-
-        if(auto resolved = detail::resolve(*object, *parsed); !resolved) {
-            return resolved.error();
-        }
-
-        return object;
+        return detail::materialize<UserObject>(*parsed);
     }
 
 }

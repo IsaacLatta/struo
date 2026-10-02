@@ -199,7 +199,7 @@ namespace struo::detail {
         });
 
         if(!result) {
-            return result.error();
+            return err(result);
         }
 
         return user_object;

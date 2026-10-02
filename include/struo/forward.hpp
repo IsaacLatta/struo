@@ -38,7 +38,4 @@ namespace struo {
 
     template<typename... Callables>
     using Constraints = detail::TaggedArgPack<struct TagConstraints, Callables...>;
-
-    template<typename T>
-    struct DomainTraits;
 }
