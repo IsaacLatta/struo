@@ -12,6 +12,7 @@
 
 #include "struo/Result.hpp"
 #include "struo/concepts.hpp"
+#include "struo/detail/detail.hpp"
 
 namespace struo {
 
@@ -20,7 +21,7 @@ namespace struo {
         explicit JsonParser(nlohmann::json node) : node_(std::move(node)) {}
 
         template<typename T>
-        requires (!IsChronoDuration<T>)
+        requires (!IsChronoDuration<T> && !std::same_as<T, std::filesystem::path>)
         [[nodiscard]] Result<T> getAs() const {
             if(!node_.is_string() && !node_.is_boolean() && !node_.is_number()) {
                 return err(WRONG_TYPE, std::format("expected scalar, got {}", node_.type_name()));
@@ -32,11 +33,19 @@ namespace struo {
         template<typename T>
         requires IsChronoDuration<T>
         [[nodiscard]] Result<T> getAs() const {
-            auto count = getAs<typename T::rep>();
-            if(!count) {
-                return count.error();
-            }
-            return T{*count};
+            return detail::get_as_chrono_duration<T, JsonParser>(*this);
+        }
+
+        template<typename T>
+        requires std::same_as<T, std::filesystem::path>
+        [[nodiscard]] Result<std::filesystem::path> getAs() const {
+            return detail::get_as_path<JsonParser>(*this);
+        }
+
+        template<typename T>
+        requires std::is_enum_v<T>
+        [[nodiscard]] Result<T> getAs() const {
+            return detail::get_as_enum<T, JsonParser>(*this);
         }
 
         [[nodiscard]] Result<std::optional<JsonParser>> toChild(std::string_view name) const {

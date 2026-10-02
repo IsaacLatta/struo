@@ -16,11 +16,29 @@ struct YamlScalarInput {
     static auto parse(std::string_view text) {
         return struo::YamlParser{YAML::Load(std::string{text})};
     }
+    static constexpr bool supports_null = true;
+    static auto document(std::string_view text, std::string_view) { return parse(text); }
 };
 
 struct JsonScalarInput {
     static auto parse(std::string_view text) {
         return struo::JsonParser{nlohmann::json::parse(text)};
+    }
+    static constexpr bool supports_null = true;
+    static auto document(std::string_view text, std::string_view) { return parse(text); }
+};
+
+struct TomlScalarInput {
+    toml::table source;
+
+    auto parse(std::string_view text) {
+        source = toml::parse("value = " + std::string{text});
+        return struo::TomlParser{*source.get("value")};
+    }
+    static constexpr bool supports_null = false;
+    auto document(std::string_view, std::string_view text) {
+        source = toml::parse(text);
+        return struo::TomlParser{source};
     }
 };
 
@@ -64,11 +82,12 @@ namespace {
 template<typename Input>
 class ScalarTypes : public testing::Test {};
 
-using ScalarInputs = testing::Types<YamlScalarInput, JsonScalarInput>;
+using ScalarInputs = testing::Types<YamlScalarInput, JsonScalarInput, TomlScalarInput>;
 TYPED_TEST_SUITE(ScalarTypes, ScalarInputs);
 
 TYPED_TEST(ScalarTypes, ParsesCountsInTheRequestedDurationUnits) {
-    const auto parser = TypeParam::parse("250");
+    TypeParam input;
+    const auto parser = input.parse("250");
     const auto milliseconds = parser.template getAs<std::chrono::milliseconds>();
     const auto seconds = parser.template getAs<std::chrono::seconds>();
     ASSERT_TRUE(milliseconds);
@@ -76,29 +95,34 @@ TYPED_TEST(ScalarTypes, ParsesCountsInTheRequestedDurationUnits) {
     EXPECT_EQ(milliseconds.value(), std::chrono::milliseconds{250});
     EXPECT_EQ(seconds.value(), std::chrono::seconds{250});
 
-    const auto fractional = TypeParam::parse("1.25").template getAs<std::chrono::duration<double>>();
+    const auto fractional = input.parse("1.25").template getAs<std::chrono::duration<double>>();
     ASSERT_TRUE(fractional);
     EXPECT_DOUBLE_EQ(fractional.value().count(), 1.25);
-    const auto negative = TypeParam::parse("-2").template getAs<std::chrono::seconds>();
+    const auto negative = input.parse("-2").template getAs<std::chrono::seconds>();
     ASSERT_TRUE(negative);
     EXPECT_EQ(negative.value().count(), -2);
 }
 
 TYPED_TEST(ScalarTypes, ParsesUtf8PathsWithoutFilesystemAccess) {
-    const auto result = TypeParam::parse(R"("assets/caf\u00e9/data.txt")").template getAs<std::filesystem::path>();
+    TypeParam input;
+    const auto result = input.parse(R"("assets/caf\u00e9/data.txt")").template getAs<std::filesystem::path>();
     ASSERT_TRUE(result);
     EXPECT_EQ(result.value(), std::filesystem::path{u8"assets/café/data.txt"});
-    const auto empty = TypeParam::parse(R"("")").template getAs<std::filesystem::path>();
+    const auto empty = input.parse(R"("")").template getAs<std::filesystem::path>();
     ASSERT_TRUE(empty);
     EXPECT_TRUE(empty.value().empty());
 }
 
 TYPED_TEST(ScalarTypes, PropagatesConversionAndShapeErrors) {
-    const auto invalid = TypeParam::parse(R"("slow")").template getAs<std::chrono::seconds>();
+    TypeParam input;
+    const auto invalid = input.parse(R"("slow")").template getAs<std::chrono::seconds>();
     ASSERT_FALSE(invalid);
     EXPECT_EQ(invalid.error().code(), struo::INVALID_VALUE);
     for(const auto text : {"[]", "{}", "null"}) {
-        const auto parser = TypeParam::parse(text);
+        if(!TypeParam::supports_null && std::string_view{text} == "null") {
+            continue;
+        }
+        const auto parser = input.parse(text);
         const auto duration = parser.template getAs<std::chrono::seconds>();
         ASSERT_FALSE(duration);
         EXPECT_EQ(duration.error().code(), struo::WRONG_TYPE);
@@ -109,13 +133,21 @@ TYPED_TEST(ScalarTypes, PropagatesConversionAndShapeErrors) {
 }
 
 TYPED_TEST(ScalarTypes, LoadsDurationsAndPathsWithDefaultsAndContainers) {
-    const auto result = struo::load<ScalarTypesConfig>(TypeParam::parse(R"({
+    TypeParam input;
+    const auto result = struo::load<ScalarTypesConfig>(input.document(R"({
         "delay": 250,
         "interval": 1.25,
         "output": "out/data.txt",
         "inputs": ["first.txt", "second.txt"],
         "timers": {"retry": 100}
-    })"));
+    })", R"(
+        delay = 250
+        interval = 1.25
+        output = "out/data.txt"
+        inputs = ["first.txt", "second.txt"]
+        [timers]
+        retry = 100
+    )"));
     ASSERT_TRUE(result) << result.error().what();
     EXPECT_EQ(result.value().delay, std::chrono::milliseconds{250});
     EXPECT_EQ(result.value().timeout, std::chrono::seconds{5});
@@ -127,7 +159,9 @@ TYPED_TEST(ScalarTypes, LoadsDurationsAndPathsWithDefaultsAndContainers) {
 }
 
 TYPED_TEST(ScalarTypes, ReportsThePathOfInvalidDurationCounts) {
-    const auto result = struo::load<ScalarTypesConfig>(TypeParam::parse(R"({"timers": {"retry": "slow"}})"));
+    TypeParam input;
+    const auto result = struo::load<ScalarTypesConfig>(input.document(
+        R"({"timers": {"retry": "slow"}})", R"(timers = {retry = "slow"})"));
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code(), struo::INVALID_VALUE);
     EXPECT_TRUE(result.error().what().starts_with("timers[\"retry\"]: ")) << result.error().what();

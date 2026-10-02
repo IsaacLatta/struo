@@ -7,11 +7,14 @@
 #include <concepts>
 #include <optional>
 #include <type_traits>
+#include <filesystem>
 
 #include <magic_enum/magic_enum.hpp>
 
 #include "struo/concepts.hpp"
+#include "struo/Result.hpp"
 #include "struo/detail/traits.hpp"
+
 
 namespace struo::detail {
 
@@ -79,4 +82,44 @@ namespace struo::detail {
         }
         return true;
     }
+
+    template<typename Enum, typename Parser>
+    requires std::is_enum_v<Enum>
+    [[nodiscard]] constexpr Result<Enum> get_as_enum(const Parser& parser) {
+        auto result = parser.template getAs<std::string>();
+        if(!result) {
+            return err(result);
+        }
+
+        auto value = magic_enum::enum_cast<Enum>(result.value());
+        if(!value) {
+            return err(INVALID_VALUE, std::format("\"{}\" is invalid", *result));
+        }
+        
+        return *value;
+    }
+
+    template<typename T, typename Parser>
+    [[nodiscard]] constexpr Result<T> get_as_chrono_duration(const Parser& parser) {
+        auto count = parser.template getAs<typename T::rep>();
+        if(!count) {
+            return err(count);
+        }
+        return T{*count};
+    }
+
+    template<typename Parser>
+    [[nodiscard]] constexpr Result<std::filesystem::path> get_as_path(const Parser& parser) {
+        auto text = parser.template getAs<std::string>();
+        if(!text) {
+            return err(text);
+        }
+
+        try {
+            return std::filesystem::path{std::u8string(text.value().begin(), text.value().end())};
+        } catch(const std::filesystem::filesystem_error& e) {
+            return err(INVALID_VALUE, e.what());
+        }
+    }
+
 }

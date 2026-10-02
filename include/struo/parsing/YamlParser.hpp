@@ -21,30 +21,28 @@ namespace struo {
         explicit YamlParser(YAML::Node node) : node_(std::move(node))  {}
 
         template<typename T>
-        requires (!IsChronoDuration<T> && !std::same_as<T, std::filesystem::path>)
         [[nodiscard]] Result<T> getAs() const {
             return tryParse<T>([this] {
                 return node_.as<T>();
             }, YAML::NodeType::Scalar);
         }
-
+        
         template<typename T>
         requires IsChronoDuration<T>
         [[nodiscard]] Result<T> getAs() const {
-            auto count = getAs<typename T::rep>();
-            if(!count) {
-                return count.error();
-            }
-            return T{*count};
+            return detail::get_as_chrono_duration<T, YamlParser>(*this);
         }
 
         template<typename T>
         requires std::same_as<T, std::filesystem::path>
+        [[nodiscard]] Result<std::filesystem::path> getAs() const {
+            return detail::get_as_path<YamlParser>(*this);
+        }
+
+        template<typename T>
+        requires std::is_enum_v<T>
         [[nodiscard]] Result<T> getAs() const {
-            return tryParse<T>([this] {
-                const auto text = node_.as<std::string>();
-                return T{std::u8string(text.begin(), text.end())};
-            }, YAML::NodeType::Scalar);
+            return detail::get_as_enum<T, YamlParser>(*this);
         }
 
         [[nodiscard]] Result<std::optional<YamlParser>> toChild(std::string_view name) const {
