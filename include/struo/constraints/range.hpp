@@ -79,5 +79,4 @@ namespace struo {
     template<size_t N>
     inline constexpr auto SizeExactly { SizeRangeConstraint<N, N>{} };
 
-    inline constexpr auto NotEmpty { SizeAtLeast<1> };
 }

@@ -83,6 +83,7 @@ namespace struo {
         using DefaultResult = Result<std::optional<value_type>>;
         using DefaultFunc = std::function<DefaultResult()>;
         using ConstraintFunc = std::function<Result<void>(const value_type&)>;
+        using TransformFunc = std::function<Result<value_type>(const value_type&)>;
 
     private:
         constexpr void apply(Description description) {
@@ -107,13 +108,19 @@ namespace struo {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<void>>(std::move(constraints), constraints_);
         }
 
+        template<typename... Callables>
+        constexpr void apply(Transforms<Callables...> transforms) {
+            detail::apply_and_wrap_arg_func_pack<value_type, Result<value_type>>(std::move(transforms), transforms_);
+        }
+
     private:
         Keys aliases_{};
         Description description_{};
         Presence presence_ { OPTIONAL };
+        std::optional<std::string_view> parsed_as_key_{};
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};
+        std::vector<TransformFunc> transforms_{};
         std::vector<ConstraintFunc> constraints_{};
-        std::optional<std::string_view> parsed_as_key_{};
     };
 }

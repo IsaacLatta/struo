@@ -60,7 +60,7 @@ template<typename T>
 struct IsOptionalImpl : std::false_type {};
 
 template<typename T>
-struct IsOptionalImpl<std::optional<T>> : std::true_type {};    
+struct IsOptionalImpl<std::optional<T>> : std::true_type {};
 
 template<auto V>
 struct ValueT {
@@ -97,5 +97,4 @@ constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pac
         }), ...);
     }, std::move(pack.values));
 }
-
 }

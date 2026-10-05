@@ -38,4 +38,7 @@ namespace struo {
 
     template<typename... Callables>
     using Constraints = detail::TaggedArgPack<struct TagConstraints, Callables...>;
+
+    template<typename... Callables>
+    using Transforms = detail::TaggedArgPack<struct TagTransforms, Callables...>;
 }

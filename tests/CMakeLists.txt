@@ -19,6 +19,8 @@ target_sources(struo_tests
         unit_platform_constraints.cpp
         unit_combinator_constraints.cpp
         unit_traversal.cpp
+        unit_value_constraints.cpp
+        unit_transforms.cpp
 )
 
 target_include_directories(struo_tests

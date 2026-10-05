@@ -10,5 +10,6 @@
 #include "struo/constraints/constraints.hpp"
 
 #include "struo/parsing/parsing.hpp"
-
 #include "struo/parsing/TomlParser.hpp"
+
+#include "struo/transforms/transforms.hpp"

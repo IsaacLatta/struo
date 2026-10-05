@@ -12,6 +12,11 @@
 namespace struo {
 
 template<typename T>
+concept HasEmptyApi = requires(const T& t) {
+    t.empty();
+};
+
+template<typename T>
 concept IsOptional = detail::IsOptionalImpl<std::remove_cvref_t<T>>::value;
 
 template<typename T>
