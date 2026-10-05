@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <ios>
@@ -24,10 +25,13 @@ struct TrimT {
 
 private:
     [[nodiscard]] static std::string doTrim(const std::string& str) {
-        auto copy { str };
-        copy.erase(copy.begin(), std::find_if(copy.begin(), copy.end(), [](unsigned char ch) { return ch != Char; }));
-        copy.erase(std::find_if(copy.rbegin(), copy.rend(), [](unsigned char ch) { return ch != Char; }).base(), copy.end());
-        return copy;
+        const size_t first = str.find_first_not_of(Char);
+        if(first == std::string::npos) {
+            return {};
+        }
+        const size_t last = str.find_last_not_of(Char);
+        const size_t length = last - first + 1;
+        return str.substr(first, length);
     }
 };
 

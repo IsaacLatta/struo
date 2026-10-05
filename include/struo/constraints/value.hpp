@@ -1,6 +1,7 @@
 #pragma once
 
-#include <chrono>
+#include <format>
+#include <string>
 #include <cmath>
 #include <string_view>
 #include <type_traits>
@@ -11,9 +12,7 @@
 namespace struo {
 
     template<typename T>
-    concept HasFormatter = requires(const T& t) {
-        std::format("{}", t);
-    };
+    concept HasFormatter = std::is_default_constructible_v<std::formatter<std::remove_cvref_t<T>, char>>;
 
     template<auto... Values>
     struct OneOfConstraint {
@@ -99,7 +98,7 @@ namespace struo {
         template<typename T>
         constexpr Result<void> operator()(const T& value) const {
             if constexpr (std::is_floating_point_v<T>) {
-                if(std::isfinite(value)) {
+                if(!std::isfinite(value)) {
                     return err(INVALID_ARGUMENT, std::format("\"{}\" failed, {:.3f}... is not finite", name(), value));
                 }
                 return ok();
@@ -111,7 +110,7 @@ namespace struo {
 
     struct PositiveConstraint {
         static constexpr std::string_view name() {
-            return "not empty";
+            return "positive";
         }
 
         template<typename T>

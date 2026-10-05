@@ -91,11 +91,11 @@ namespace struo::detail {
             return err(result);
         }
 
-        auto value = magic_enum::enum_cast<Enum>(result.value());
+        auto value = magic_enum::enum_cast<Enum>(result.value(), magic_enum::case_insensitive);
         if(!value) {
             return err(INVALID_VALUE, std::format("\"{}\" is invalid", *result));
         }
-        
+
         return *value;
     }
 
