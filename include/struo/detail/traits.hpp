@@ -17,8 +17,61 @@
 
 #include "struo/detail/types.hpp"
 #include "struo/detail/internal_concepts.hpp"
+#include "struo/transforms/transforms.hpp"
 
 namespace struo::detail {
+
+template<typename Operation, typename Keyword>
+struct KeywordTraits {
+    using callable_type = Keyword;
+    static constexpr callable_type adapt(Keyword keyword) {
+        return keyword;
+    }
+};
+
+template<typename Operation, auto Keyword>
+consteval auto adapter_of() {
+    using keyword_type = std::remove_cvref_t<decltype(Keyword)>;
+    return KeywordTraits<Operation, keyword_type>::adapt(Keyword);
+}
+
+template<auto... Inners>
+struct KeywordTraits<TransformOperation, IfPresentT<Inners...>> {
+    using callable_type  = IfPresentTransformT<adapter_of<TransformOperation, Inners>()...>;
+    static constexpr callable_type adapt(IfPresentT<Inners...>) {
+        return {};
+    }
+};
+
+template<auto... Inners>
+struct KeywordTraits<ConstraintOperation, ForEachT<Inners...>> {
+    using callable_type = ForEachConstraint<adapter_of<ConstraintOperation, Inners>()...>;
+    static constexpr callable_type adapt(ForEachT<Inners...>) {
+        return {};
+    }
+};
+
+template<auto... Inners>
+struct KeywordTraits<TransformOperation, ForEachT<Inners...>> {
+    using callable_type = ForEachTransformT<adapter_of<TransformOperation, Inners>()...>;
+    static constexpr callable_type adapt(ForEachT<Inners...>) {
+        return {};
+    }
+};
+
+template<typename ValueType, typename ReturnType, typename Operation = void, typename Container, typename Tag, typename... Callables>
+constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pack, Container& container) {
+    std::apply([&](auto&&... callable){
+        (container.emplace_back([func = KeywordTraits<Operation, std::remove_cvref_t<decltype(callable)>>::adapt(
+            std::forward<decltype(callable)>(callable))](auto&&... args) mutable -> ReturnType {
+            if constexpr (std::invocable<decltype(func), decltype(args)...>) {
+                return ReturnType { std::invoke(func, std::forward<decltype(args)>(args)...) };
+            } else {
+                return ReturnType { func.template operator()<ValueType>( std::forward<decltype(args)>(args)...) };
+            }
+        }), ...);
+    }, std::move(pack.values));
+}
 
 template<typename Object, typename Value>
 struct MemberTraits<Value Object::*> {

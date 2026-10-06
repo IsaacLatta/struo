@@ -172,11 +172,17 @@ namespace struo::detail {
 
         if(!value) {
             if(field.is(REQUIRED)) {
-                return append_to_err(
-                    err(KEY_NOT_FOUND, std::format("failed to resolve field \"{}\"", field.getPrimaryKey())),
-                    context);
+                return append_to_err(err(KEY_NOT_FOUND, std::format("failed to resolve field \"{}\"", field.getPrimaryKey())), context);
             }
             return ok();
+        }
+
+        for(const auto& transform: field.getTransforms()) {
+            auto result = transform(*value);
+            if(!result) {
+                return append_to_err(result.error(), context);
+            }
+            *value = std::move(*result);
         }
 
         for(const auto& constraint : field.getConstraints()) {

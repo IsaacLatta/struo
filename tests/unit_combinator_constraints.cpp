@@ -52,7 +52,7 @@ TEST(CombinatorConstraintTest, MetadataHelpersNormalizeTypes) {
     EXPECT_EQ(detail::description_of<decltype(constraint)>(), "must be even");
     EXPECT_EQ(detail::description_of<const volatile NamedEven&&>(), "must be even");
     EXPECT_EQ(detail::name_of<const int&>(), "<unnamed>");
-    EXPECT_TRUE(detail::description_of<const int&>().empty());
+    EXPECT_TRUE((detail::description_of<const int&>().empty()));
 }
 
 TEST(CombinatorConstraintTest, DoesNotRepeatChildNames) {
@@ -82,7 +82,7 @@ TEST(CombinatorConstraintTest, ErrorsDescribeNamedConstraints) {
         {"\"exactly one\"", "no constraints matched", "\"even\"", "expected even"});
     check_message(ExactlyOne<NamedEven{}, NamedEven{}>(2),
         {"\"exactly one\"", "at least two", "\"even\""});
-    const auto each = ForEach<NamedEven{}>(std::vector<int>{2, 3});
+    const auto each = detail::adapter_of<detail::ConstraintOperation, ForEach<NamedEven{}>>()(std::vector<int>{2, 3});
     check_message(each, {"\"for each\"", "\"even\"", "expected even", "index=1"});
     ASSERT_FALSE(each);
     EXPECT_EQ(each.error().code(), INVALID_VALUE);
@@ -124,21 +124,21 @@ TEST(CombinatorConstraintTest, SupportsNesting) {
 }
 
 TEST(CombinatorConstraintTest, ForEachRequiresEveryElementToMatch) {
-    EXPECT_TRUE(ForEach<IsEven>(std::vector<int>{2, 4, 6}));
-    EXPECT_FALSE(ForEach<IsEven>(std::vector<int>{2, 3, 6}));
+    EXPECT_TRUE((detail::adapter_of<detail::ConstraintOperation, ForEach<IsEven>>()(std::vector<int>{2, 4, 6})));
+    EXPECT_FALSE((detail::adapter_of<detail::ConstraintOperation, ForEach<IsEven>>()(std::vector<int>{2, 3, 6})));
 }
 
 TEST(CombinatorConstraintTest, ForEachAcceptsAnEmptyContainer) {
-    EXPECT_TRUE(ForEach<IsEven>(std::vector<int>{}));
+    EXPECT_TRUE((detail::adapter_of<detail::ConstraintOperation, ForEach<IsEven>>()(std::vector<int>{})));
 }
 
 TEST(CombinatorConstraintTest, ForEachRequiresAllConstraintsToMatch) {
-    EXPECT_TRUE((ForEach<IsEven, IsEven>(std::vector<int>{2, 4})));
-    EXPECT_FALSE((ForEach<IsEven, IsOdd>(std::vector<int>{2, 4})));
+    EXPECT_TRUE((detail::adapter_of<detail::ConstraintOperation, ForEach<IsEven, IsEven>>()(std::vector<int>{2, 4})));
+    EXPECT_FALSE((detail::adapter_of<detail::ConstraintOperation, ForEach<IsEven, IsOdd>>()(std::vector<int>{2, 4})));
 }
 
 TEST(CombinatorConstraintTest, ForEachSupportsNestedCombinators) {
-    EXPECT_TRUE((ForEach<Or<IsEven, IsOdd>>(std::vector<int>{1, 2, 3, 4})));
+    EXPECT_TRUE((detail::adapter_of<detail::ConstraintOperation, ForEach<Or<IsEven, IsOdd>>>()(std::vector<int>{1, 2, 3, 4})));
 }
 
 } // namespace

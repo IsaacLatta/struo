@@ -4,10 +4,15 @@
 #include <cctype>
 #include <cstring>
 #include <ios>
+#include <functional>
+#include <format>
+#include <utility>
+#include <optional>
 #include <string>
 #include <filesystem>
 
 #include "struo/Result.hpp"
+#include "struo/concepts.hpp"
 
 #include "struo/detail/types.hpp"
 
@@ -118,5 +123,64 @@ inline constexpr ToLowerT ToLower{};
 
 template<Str ParentDir>
 inline constexpr RelativeToT<ParentDir> RelativeTo{};
+
+}
+
+namespace struo::detail {
+
+template<auto... Inners>
+struct IfPresentTransformT {
+    template<typename T>
+    constexpr Result<std::optional<T>> operator()(const std::optional<T>& value) const {
+        if(!value) {
+            return std::optional<T>{};
+        }
+
+        Result<T> result{*value};
+        auto transform_one = [&](const auto& inner) {
+            if(!result) {
+                return;
+            }
+            result = Result<T>{std::invoke(inner, std::as_const(*result))};
+        };
+
+        (transform_one(Inners), ...);
+
+        if(!result) {
+            return err(result);
+        }
+
+        return std::optional<T>{std::move(*result)};
+    }
+};
+
+template<auto... Inners>
+struct ForEachTransformT {
+    template<typename T>
+    requires IsSequence<T>
+    constexpr Result<T> operator()(const T& value) const {
+        T transformed{};
+        size_t index{0u};
+        for(const auto& element : value) {
+            Result<typename T::value_type> result { element };
+            auto transform_one = [&](const auto& inner) {
+                if(result) {
+                    result = Result<typename T::value_type> { std::invoke(inner, std::as_const(*result)) };
+                }
+            };
+
+            (transform_one(Inners), ...);
+            if(!result) {
+                return err(result.error().code(),
+                    std::format("\"for each\" transform failed: {} (on index={})", result.error().what(), index));
+            }
+
+            transformed.emplace_back(std::move(*result));
+            ++index;
+        }
+
+        return transformed;
+    }
+};
 
 }

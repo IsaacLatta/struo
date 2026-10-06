@@ -52,6 +52,10 @@ namespace struo {
             return std::views::all(constraints_);
         }
 
+        [[nodiscard]] constexpr auto getTransforms() const noexcept {
+            return std::views::all(transforms_);
+        }
+
         constexpr void setStagedValue(staged_type value) {
             staged_value_ = std::move(value);
         }
@@ -105,12 +109,12 @@ namespace struo {
 
         template<typename... Callables>
         constexpr void apply(Constraints<Callables...> constraints) {
-            detail::apply_and_wrap_arg_func_pack<value_type, Result<void>>(std::move(constraints), constraints_);
+            detail::apply_and_wrap_arg_func_pack<value_type, Result<void>, detail::ConstraintOperation>(std::move(constraints), constraints_);
         }
 
         template<typename... Callables>
         constexpr void apply(Transforms<Callables...> transforms) {
-            detail::apply_and_wrap_arg_func_pack<value_type, Result<value_type>>(std::move(transforms), transforms_);
+            detail::apply_and_wrap_arg_func_pack<value_type, Result<value_type>, detail::TransformOperation>(std::move(transforms), transforms_);
         }
 
     private:

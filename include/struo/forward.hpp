@@ -20,6 +20,9 @@ namespace struo {
     requires (!std::is_reference_v<T> && !std::same_as<std::remove_cvref_t<T>, Error>)
     class Result;
 
+    template<auto... Constraints>
+    struct ForEachConstraint;
+
     class YamlParser;
     class JsonParser;
     class TomlParser;

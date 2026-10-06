@@ -17,6 +17,18 @@
 
 namespace struo {
 
+template<auto... Inners>
+struct IfPresentT {};
+
+template<auto... Inners>
+inline constexpr IfPresentT<Inners...> IfPresent{};
+
+template<auto... Inners>
+struct ForEachT {};
+
+template<auto... Inners>
+inline constexpr ForEachT<Inners...> ForEach{};
+
 template <size_t N>
 struct Str {
     char string[N];
@@ -30,6 +42,9 @@ struct Str {
 }
 
 namespace struo::detail {
+
+struct ConstraintOperation {};
+struct TransformOperation {};
 
 template<typename T>
 inline constexpr bool always_false_v { false };
@@ -85,16 +100,5 @@ struct TaggedArgPack {
     constexpr explicit TaggedArgPack(Args... args) : values{std::move(args)...} {}
 };
 
-template<typename ValueType, typename ReturnType, typename Container, typename Tag, typename... Callables>
-constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pack, Container& container) {
-    std::apply([&](auto&&... callable){
-        (container.emplace_back([func = std::forward<decltype(callable)>(callable)](auto&&... args) mutable -> ReturnType {
-            if constexpr (std::invocable<decltype(func), decltype(args)...>) {
-                return ReturnType { std::invoke(func, std::forward<decltype(args)>(args)...) };
-            } else {
-                return ReturnType { func.template operator()<ValueType>( std::forward<decltype(args)>(args)...) };
-            }
-        }), ...);
-    }, std::move(pack.values));
-}
+
 }

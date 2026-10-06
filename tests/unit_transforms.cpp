@@ -1,4 +1,7 @@
 #include "struo/transforms/transforms.hpp"
+#include "struo/Field.hpp"
+#include "struo/constraints/combinators.hpp"
+#include "struo/constraints/value.hpp"
 
 #include <gtest/gtest.h>
 
@@ -109,3 +112,211 @@ TEST(Transforms, PreserveInputValues) {
     EXPECT_EQ(path, originalPath);
 }
 } // namespace
+
+namespace keyword_test {
+struct Config { int value{}; };
+struct Threshold { int value; };
+struct Constraint {
+    int threshold;
+    struo::Result<void> operator()(const int& value) const {
+        return value >= threshold ? struo::ok()
+            : struo::err(struo::INVALID_VALUE, "below threshold");
+    }
+};
+struct Transform {
+    int increment;
+    int operator()(const int& value) const { return value + increment; }
+};
+}
+
+namespace struo::detail {
+template<>
+struct KeywordTraits<ConstraintOperation, keyword_test::Threshold> {
+    using callable_type = keyword_test::Constraint;
+    static constexpr callable_type adapt(keyword_test::Threshold keyword) {
+        return {keyword.value};
+    }
+};
+template<>
+struct KeywordTraits<TransformOperation, keyword_test::Threshold> {
+    using callable_type = keyword_test::Transform;
+    static constexpr callable_type adapt(keyword_test::Threshold keyword) {
+        return {keyword.value};
+    }
+};
+}
+
+namespace {
+TEST(Keywords, FieldAdaptsDescriptorAccordingToOperation) {
+    using namespace struo;
+    Field<&keyword_test::Config::value> field{
+        Keys{"value"},
+        Constraints{keyword_test::Threshold{5}},
+        Transforms{keyword_test::Threshold{5}}
+    };
+    const auto constraints = field.getConstraints();
+    EXPECT_FALSE(constraints.front()(4));
+    EXPECT_TRUE(constraints.front()(5));
+    const auto result = field.getTransforms().front()(4);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(*result, 9);
+}
+
+TEST(Keywords, FieldAdaptsNestedIfPresentDescriptors) {
+    using namespace struo;
+    struct Config { std::optional<std::optional<std::string>> value; };
+    Field<&Config::value> field{
+        Keys{"value"}, Transforms{IfPresent<IfPresent<ToLower>>}
+    };
+    using adapted_type = decltype(
+        detail::adapter_of<detail::TransformOperation,
+            IfPresent<IfPresent<ToLower>>>());
+    using expected_type = detail::IfPresentTransformT<
+        detail::IfPresentTransformT<ToLower>{}>;
+    static_assert(std::same_as<adapted_type, expected_type>);
+    const auto& transform = field.getTransforms().front();
+    auto present = transform(std::optional<std::optional<std::string>>{
+        std::in_place, "MiXeD"});
+    ASSERT_TRUE(present);
+    ASSERT_TRUE(*present);
+    EXPECT_EQ(**present, std::optional<std::string>{"mixed"});
+
+    auto absent = transform(std::nullopt);
+    ASSERT_TRUE(absent);
+    EXPECT_FALSE(*absent);
+
+    auto inner_absent = transform(std::optional<std::optional<std::string>>{
+        std::in_place, std::nullopt});
+    ASSERT_TRUE(inner_absent);
+    ASSERT_TRUE(*inner_absent);
+    EXPECT_FALSE(**inner_absent);
+}
+
+TEST(Keywords, OrdinaryMutableCallablesKeepTheirState) {
+    using namespace struo;
+    Field<&keyword_test::Config::value> field{
+        Keys{"value"}, Transforms{[calls = 0](int value) mutable {
+            return value + ++calls;
+        }}
+    };
+    const auto transforms = field.getTransforms();
+    EXPECT_EQ(*transforms.front()(10), 11);
+    EXPECT_EQ(*transforms.front()(10), 12);
+}
+}
+
+namespace {
+TEST(Transforms, IfPresentChainsPlainAndResultTransformsThroughField) {
+    using namespace struo;
+    struct Config { std::optional<std::string> value; };
+    constexpr auto suffix = [](const std::string& value) -> Result<std::string> {
+        return value + "!";
+    };
+    Field<&Config::value> field{
+        Keys{"value"}, Transforms{IfPresent<TrimWhitespace, ToLower, suffix>}
+    };
+    const std::optional<std::string> input{"  MiXeD  "};
+    auto result = field.getTransforms().front()(input);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(*result, std::optional<std::string>{"mixed!"});
+    EXPECT_EQ(input, std::optional<std::string>{"  MiXeD  "});
+}
+
+TEST(Transforms, IfPresentSkipsAbsentValuesAndStopsAtFirstError) {
+    using namespace struo;
+    static int before_calls;
+    static int after_calls;
+    before_calls = after_calls = 0;
+    constexpr auto fail = [](const int&) -> Result<int> {
+        ++before_calls;
+        return err(INVALID_VALUE, "transform failed");
+    };
+    constexpr auto after = [](const int& value) {
+        ++after_calls;
+        return value + 1;
+    };
+    detail::IfPresentTransformT<fail, after> transform;
+    auto absent = transform(std::optional<int>{});
+    ASSERT_TRUE(absent);
+    EXPECT_FALSE(*absent);
+    EXPECT_EQ(before_calls, 0);
+    EXPECT_EQ(after_calls, 0);
+
+    auto failed = transform(std::optional<int>{7});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().code(), INVALID_VALUE);
+    EXPECT_EQ(failed.error().what(), "transform failed");
+    EXPECT_EQ(before_calls, 1);
+    EXPECT_EQ(after_calls, 0);
+}
+
+TEST(Transforms, IfPresentPreservesEmptyStringsAndSupportsEmptyPacks) {
+    using namespace struo;
+    auto empty = detail::IfPresentTransformT<TrimWhitespace>{}(
+        std::optional<std::string>{"   "});
+    ASSERT_TRUE(empty);
+    ASSERT_TRUE(*empty);
+    EXPECT_TRUE((*empty)->empty());
+
+    auto unchanged = detail::IfPresentTransformT<>{}(std::optional<int>{42});
+    ASSERT_TRUE(unchanged);
+    EXPECT_EQ(*unchanged, std::optional<int>{42});
+}
+
+
+}
+
+namespace {
+TEST(Keywords, ForEachConstraintWorksThroughFieldAndNestedDescriptors) {
+    using namespace struo;
+    struct Config { std::vector<std::vector<std::string>> value; };
+    Field<&Config::value> field{
+        Keys{"value"}, Constraints{ForEach<ForEach<NotEmpty>>}
+    };
+    EXPECT_TRUE(field.getConstraints().front()({{"first"}, {"second"}}));
+    auto failed = field.getConstraints().front()({{"first"}, {""}});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().code(), INVALID_VALUE);
+    EXPECT_NE(failed.error().what().find("index=1"), std::string_view::npos);
+}
+
+TEST(Keywords, ForEachTransformsSequencesAndComposesWithIfPresent) {
+    using namespace struo;
+    struct Config { std::optional<std::vector<std::string>> value; };
+    Field<&Config::value> field{
+        Keys{"value"}, Transforms{IfPresent<ForEach<TrimWhitespace, ToLower>>}
+    };
+    const auto& transform = field.getTransforms().front();
+    const std::optional<std::vector<std::string>> input{{"  MiXeD  ", " WORD "}};
+    auto result = transform(input);
+    ASSERT_TRUE(result);
+    ASSERT_TRUE(*result);
+    EXPECT_EQ(**result, (std::vector<std::string>{"mixed", "word"}));
+    EXPECT_EQ(*input, (std::vector<std::string>{"  MiXeD  ", " WORD "}));
+    auto absent = transform(std::nullopt);
+    ASSERT_TRUE(absent);
+    EXPECT_FALSE(*absent);
+    auto empty = transform(std::vector<std::string>{});
+    ASSERT_TRUE(empty);
+    ASSERT_TRUE(*empty);
+    EXPECT_TRUE((*empty)->empty());
+}
+
+TEST(Transforms, ForEachStopsAtFirstFailureAndReportsIndex) {
+    using namespace struo;
+    static int calls;
+    calls = 0;
+    constexpr auto check = [](int value) -> Result<int> {
+        ++calls;
+        if(value == 2) return err(INVALID_VALUE, "rejected element");
+        return value + 10;
+    };
+    constexpr auto after = [](int value) { return value * 2; };
+    auto result = detail::ForEachTransformT<check, after>{}(std::vector<int>{1, 2, 3});
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code(), INVALID_VALUE);
+    EXPECT_EQ(result.error().what(),
+        "\"for each\" transform failed: rejected element (on index=1)");
+    EXPECT_EQ(calls, 2);
+}
+}

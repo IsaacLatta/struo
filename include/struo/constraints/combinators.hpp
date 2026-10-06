@@ -163,6 +163,4 @@ namespace struo {
     template<auto... Constraints>
     inline constexpr auto ExactlyOne { ExactlyOneConstraint<Constraints...>{} };
 
-    template<auto... Constraints>
-    inline constexpr auto ForEach { ForEachConstraint<Constraints...>{} };
 }
