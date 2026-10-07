@@ -19,17 +19,20 @@ ctest --test-dir build/dev --output-on-failure -L e2e -R FullConfiguration
 ctest --test-dir build/dev --output-on-failure -L e2e -R 'e2e\.Vision'
 ```
 
-For direct GoogleTest execution, use the fixture directory as the working directory:
+For direct GoogleTest execution, run from the project root:
 
 ```sh
-cd tests/fixtures
-../../build/dev/tests/struo_e2e_tests
-../../build/dev/tests/struo_e2e_tests --gtest_filter='Vision/*.*'
+./build/dev/tests/struo_tests
+./build/dev/tests/struo_e2e_tests
+./build/dev/tests/struo_e2e_tests --gtest_filter='Vision/*.*'
 ```
 
-CMake anchors configuration fixture paths to the source tree and sets this working
-directory for CTest. Relative paths *inside* a loaded configuration are interpreted
-against that working directory. Keep checked-in fixtures read-only.
+CMake anchors configuration fixture paths to the source tree and sets the project
+root as the working directory for CTest. Relative paths *inside* a loaded configuration
+are interpreted against the project root.
+
+Unit test sources live in `unit/`, and end to end are found in `e2e/`.
+Shared helpers and schemas live in `include/`, and documents/resources in `fixtures/`.
 
 ## E2E cases
 
@@ -49,19 +52,10 @@ using `struo::Yaml`, `struo::Json` and `struo::Toml`.
 | `missing_variant_payload` | Recognized action tag without its `value`. |
 | `malformed` | Intentionally invalid native syntax. |
 
-Successful cases assert independently specified expected typed values, shared across
-formats. Schema-invalid cases first establish readable input and valid native syntax,
-then assert loading failure only. Malformed cases establish readable input and invalid
-syntax. Missing files and unexpected syntax fail the test rather than satisfy a negative
-loading assertion. Parse/schema error codes, paths and messages are not fixed by these tests.
-
-The paths in the web-server fixtures are inert configuration values; no server is started.
-
 ## Vision cases
 
 `fixtures/vision/` contains twelve cases, each independently authored in YAML, JSON
-and TOML. Together, both scenarios register 63 E2E instances (27 web-server and 36 vision)
-against the same `e2e::AllFormats` list and public loading API.
+and TOML.
 
 | Case | Purpose |
 | --- | --- |
@@ -78,17 +72,8 @@ against the same `e2e::AllFormats` list and public loading API.
 | `cross_pipeline_reference` | Target exists only in a different pipeline; the custom local-reference constraint rejects it. |
 | `malformed` | Intentionally invalid native syntax. |
 
-Successful fixtures declare referring nodes before their targets and reuse local names
-across pipelines. Expected values are asserted independently for each pipeline, including
-variant payloads, processor order, geometry, class maps, durations, defaults and optionals.
-The reference constraint checks existence within each pipeline; it does not check cycles
-or target types. Negative cases use the same preflight and failure-only policy as web-server tests.
-
-`fixtures/resources/video.txt` is an inert regular file used solely for the Video camera's
-`FileExists` constraint. It is not a playable video and is never decoded. Configurations
-reference `resources/video.txt` relative to the fixture working directory; direct runs
-therefore need the working directory shown above. Serial-device paths, endpoints and
-credentials are fixture values; tests do not access hardware or start services.
+`fixtures/resources/video.txt` is a regular file used solely for the Video camera's
+`FileExists` constraint.
 
 ## Add a format or scenario
 
@@ -97,12 +82,11 @@ credentials are fixture values; tests do not access hardware or start services.
 2. Add a descriptor in `include/e2e/fixtures.hpp` with `Format`, `extension` and
    `validateSyntax(contents)`. The syntax check uses the native format library.
 3. Register it once in `e2e::AllFormats`. Both scenario suites use this shared list.
-4. Author matching native documents for every applicable case in each scenario's
-   fixture directory. Do not generate documents from a shared intermediate representation.
-5. Run the E2E label and full regression suite. Existing scenario assertions require
-   no format-specific copies; missing fixtures fail loudly.
-
+4. Author matching documents for every applicable case in each scenario's
+   fixture directory.
+5. Author tests loading each of your applicable cases.
+6. 
 For a new scenario, derive its typed fixture from `e2e::FixtureTest<Config, Descriptor>`,
 register against `e2e::AllFormats`, call `loadCase(scenario, stem)` (or pass `false`
-for intentional syntax errors), and add its source to the E2E target. Expectation code
-belongs in the scenario source; syntax/readability preflight belongs in the shared harness.
+for intentional syntax errors), place its source under `e2e/`, and add it to the E2E target. Expectation code
+belongs in the scenario's tests, while syntax/readability preflight belongs in the shared test harness.

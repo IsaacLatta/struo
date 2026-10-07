@@ -226,7 +226,7 @@ TYPED_TEST(Vision, VideoPathAlias) {
     ASSERT_TRUE(std::holds_alternative<cv::CameraNode>(pipeline.nodes.at("source")));
     const auto& camera = std::get<cv::CameraNode>(pipeline.nodes.at("source")).camera;
     ASSERT_TRUE(std::holds_alternative<cv::VideoCamera>(camera));
-    EXPECT_EQ(std::get<cv::VideoCamera>(camera).path, std::filesystem::path{"resources/video.txt"});
+    EXPECT_EQ(std::get<cv::VideoCamera>(camera).path, std::filesystem::path{"tests/fixtures/resources/video.txt"});
     ASSERT_TRUE(std::holds_alternative<cv::ModelNode>(pipeline.nodes.at("model")));
     expect_classification(std::get<cv::ModelNode>(pipeline.nodes.at("model")), Classes{{"frame", 0}});
 }

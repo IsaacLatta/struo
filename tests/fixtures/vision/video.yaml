@@ -9,5 +9,5 @@ pipelines:
       source:
         type: CAMERA
         value:
-          camera: {type: VIDEO, value: {file: resources/video.txt}}
+          camera: {type: VIDEO, value: {file: tests/fixtures/resources/video.txt}}
     trigger: {type: PERIODIC, value: {scan_every_ms: 40}}
