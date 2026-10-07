@@ -1,0 +1,13 @@
+pipelines:
+  replay:
+    nodes:
+      model:
+        type: MODEL
+        value:
+          image_node_name: source
+          model: {type: CLASSIFICATION, value: {class_names: {frame: 0}}}
+      source:
+        type: CAMERA
+        value:
+          camera: {type: VIDEO, value: {file: resources/video.txt}}
+    trigger: {type: PERIODIC, value: {scan_every_ms: 40}}

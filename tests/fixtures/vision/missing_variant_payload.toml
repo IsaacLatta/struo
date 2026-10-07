@@ -1,0 +1,11 @@
+[pipelines.inspection.nodes.model]
+type = "MODEL"
+[pipelines.inspection.nodes.model.value]
+image_node_name = "source"
+model = {type = "CLASSIFICATION"}
+[pipelines.inspection.nodes.source]
+type = "CAMERA"
+value = {camera = {type = "IP", value = {ip = "192.0.2.20", port = 554}}}
+[pipelines.inspection.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 1000}

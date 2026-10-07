@@ -1,0 +1,12 @@
+[pipelines.replay.nodes.model]
+type = "MODEL"
+[pipelines.replay.nodes.model.value]
+image_node_name = "source"
+model = {type = "CLASSIFICATION", value = {class_names = {frame = 0}}}
+[pipelines.replay.nodes.source]
+type = "CAMERA"
+[pipelines.replay.nodes.source.value]
+camera = {type = "VIDEO", value = {file = "resources/video.txt"}}
+[pipelines.replay.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 40}

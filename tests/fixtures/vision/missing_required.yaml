@@ -1,0 +1,5 @@
+pipelines:
+  inspection:
+    nodes:
+      source: {type: CAMERA, value: {camera: {type: IP, value: {ip: 192.0.2.20, port: 554}}}}
+    trigger: {type: PERIODIC, value: {}}

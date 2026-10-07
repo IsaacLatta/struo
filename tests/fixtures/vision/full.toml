@@ -1,0 +1,78 @@
+[command_server]
+ip = "127.0.0.1"
+port = 9090
+password = "fixture-admin"
+
+[pipelines.inspection.nodes.model]
+type = "MODEL"
+[pipelines.inspection.nodes.model.value]
+image_node_name = "prepare"
+[pipelines.inspection.nodes.model.value.model]
+type = "DETECTION"
+[pipelines.inspection.nodes.model.value.model.value]
+class_names = {defect = 0, ok = 1}
+confidence_threshold = 0.8
+[pipelines.inspection.nodes.prepare]
+type = "PROCESS"
+[pipelines.inspection.nodes.prepare.value]
+image_node_name = "source"
+[[pipelines.inspection.nodes.prepare.value.image_processors]]
+type = "ROI"
+[pipelines.inspection.nodes.prepare.value.image_processors.value]
+origin = {x = 10, y = 20}
+dimensions = {height = 480, width = 640}
+[[pipelines.inspection.nodes.prepare.value.image_processors]]
+type = "RESIZE"
+[pipelines.inspection.nodes.prepare.value.image_processors.value]
+height = 224
+width = 224
+[[pipelines.inspection.nodes.prepare.value.image_processors]]
+type = "LETTERBOX"
+[pipelines.inspection.nodes.prepare.value.image_processors.value]
+target = {height = 256, width = 256}
+padding = {red = 114, green = 115, blue = 116}
+[pipelines.inspection.nodes.source]
+type = "CAMERA"
+[pipelines.inspection.nodes.source.value.camera]
+type = "GIGE"
+[pipelines.inspection.nodes.source.value.camera.value]
+device_id = "gige-01"
+preset_name = "inspection"
+mbps = 2500
+compression = true
+crop = {origin = {x = 8, y = 12}, dimensions = {height = 720, width = 1280}}
+[pipelines.inspection.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 250}
+
+[pipelines.sorting.nodes.model]
+type = "MODEL"
+[pipelines.sorting.nodes.model.value]
+image_node_name = "source"
+model = {type = "CLASSIFICATION", value = {class_names = {accept = 0, reject = 1}}}
+[pipelines.sorting.nodes.source]
+type = "CAMERA"
+[pipelines.sorting.nodes.source.value]
+camera = {type = "USB", value = {device_id = "usb-01", preset_name = "production"}}
+[pipelines.sorting.trigger]
+type = "SERIAL"
+value = {device = "/dev/ttyTEST", baud_rate = 115200, message = "SCAN"}
+
+[pipelines.remote.nodes.model]
+type = "MODEL"
+[pipelines.remote.nodes.model.value]
+image_node_name = "source"
+model = {type = "SEGMENTATION", value = {class_names = {background = 0, part = 1}, mask_confidence_threshold = 0.7}}
+[pipelines.remote.nodes.source]
+type = "CAMERA"
+[pipelines.remote.nodes.source.value.camera]
+type = "IP"
+[pipelines.remote.nodes.source.value.camera.value]
+ip = "192.0.2.10"
+port = 554
+endpoint = "/stream"
+username = "fixture-user"
+password = "fixture-password"
+[pipelines.remote.trigger]
+type = "HTTP"
+value = {path = "/inspect"}

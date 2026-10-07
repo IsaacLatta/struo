@@ -1,0 +1,9 @@
+{"pipelines": {"inspection": {
+  "nodes": {
+    "model": {"type": "MODEL", "value": {
+      "image_node_name": "missing", "model": {"type": "CLASSIFICATION", "value": {"class_names": {"ok": 0}}}
+    }},
+    "source": {"type": "CAMERA", "value": {"camera": {"type": "IP", "value": {"ip": "192.0.2.20", "port": 554}}}}
+  },
+  "trigger": {"type": "PERIODIC", "value": {"scan_every_ms": 1000}}
+}}}

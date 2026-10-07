@@ -16,13 +16,15 @@ its discovered tests have the `e2e.` prefix and `e2e` CTest label.
 ```sh
 ctest --test-dir build/dev --output-on-failure -L e2e
 ctest --test-dir build/dev --output-on-failure -L e2e -R FullConfiguration
+ctest --test-dir build/dev --output-on-failure -L e2e -R 'e2e\.Vision'
 ```
 
 For direct GoogleTest execution, use the fixture directory as the working directory:
 
 ```sh
 cd tests/fixtures
-../../build/dev/tests/struo_e2e_tests --gtest_filter='WebServer/*.*'
+../../build/dev/tests/struo_e2e_tests
+../../build/dev/tests/struo_e2e_tests --gtest_filter='Vision/*.*'
 ```
 
 CMake anchors configuration fixture paths to the source tree and sets this working
@@ -54,7 +56,39 @@ syntax. Missing files and unexpected syntax fail the test rather than satisfy a 
 loading assertion. Parse/schema error codes, paths and messages are not fixed by these tests.
 
 The paths in the web-server fixtures are inert configuration values; no server is started.
-Vision cases will extend the same infrastructure in T4.
+
+## Vision cases
+
+`fixtures/vision/` contains twelve cases, each independently authored in YAML, JSON
+and TOML. Together, both scenarios register 63 E2E instances (27 web-server and 36 vision)
+against the same `e2e::AllFormats` list and public loading API.
+
+| Case | Purpose |
+| --- | --- |
+| `full` | GigE/process/detection, USB/classification and IP/segmentation pipelines, covering ROI/Resize/Letterbox and Periodic/Serial/HTTP triggers. |
+| `minimal` | IP/classification with a Periodic trigger; endpoint defaults and omitted credentials/command server. |
+| `defaults` | Separate IP and GigE pipelines sharing local node names; default bandwidth/compression/segmentation threshold and absent optional settings. |
+| `video` | Replay pipeline using the Video camera's `file` alias and checked-in resource. |
+| `missing_required` | Periodic trigger without its interval. |
+| `wrong_type` | Sequence supplied where a node map is required. |
+| `invalid_constraint` | Detection threshold outside [0, 1]. |
+| `unknown_variant` | Unrecognized nested camera tag. |
+| `missing_variant_payload` | Classification-model tag without its `value`. |
+| `missing_reference` | Model input absent from its pipeline and every other pipeline. |
+| `cross_pipeline_reference` | Target exists only in a different pipeline; the custom local-reference constraint rejects it. |
+| `malformed` | Intentionally invalid native syntax. |
+
+Successful fixtures declare referring nodes before their targets and reuse local names
+across pipelines. Expected values are asserted independently for each pipeline, including
+variant payloads, processor order, geometry, class maps, durations, defaults and optionals.
+The reference constraint checks existence within each pipeline; it does not check cycles
+or target types. Negative cases use the same preflight and failure-only policy as web-server tests.
+
+`fixtures/resources/video.txt` is an inert regular file used solely for the Video camera's
+`FileExists` constraint. It is not a playable video and is never decoded. Configurations
+reference `resources/video.txt` relative to the fixture working directory; direct runs
+therefore need the working directory shown above. Serial-device paths, endpoints and
+credentials are fixture values; tests do not access hardware or start services.
 
 ## Add a format or scenario
 

@@ -1,0 +1,28 @@
+[command_server]
+ip = "127.0.0.1"
+port = 9091
+[pipelines.ip_defaults.nodes.model]
+type = "MODEL"
+[pipelines.ip_defaults.nodes.model.value]
+image_node_name = "source"
+model = {type = "CLASSIFICATION", value = {class_names = {ok = 0}}}
+[pipelines.ip_defaults.nodes.source]
+type = "CAMERA"
+[pipelines.ip_defaults.nodes.source.value]
+camera = {type = "IP", value = {address = "camera.local", port = 8554}}
+[pipelines.ip_defaults.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 500}
+
+[pipelines.gige_defaults.nodes.model]
+type = "MODEL"
+[pipelines.gige_defaults.nodes.model.value]
+image_node_name = "source"
+model = {type = "SEGMENTATION", value = {class_names = {background = 0, part = 1}}}
+[pipelines.gige_defaults.nodes.source]
+type = "CAMERA"
+[pipelines.gige_defaults.nodes.source.value]
+camera = {type = "GIGE", value = {device_id = "gige-default"}}
+[pipelines.gige_defaults.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 750}

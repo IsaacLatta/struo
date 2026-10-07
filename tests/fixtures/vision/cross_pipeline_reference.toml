@@ -1,0 +1,17 @@
+[pipelines.inspection.nodes.model]
+type = "MODEL"
+[pipelines.inspection.nodes.model.value]
+image_node_name = "remote_source"
+model = {type = "CLASSIFICATION", value = {class_names = {ok = 0}}}
+[pipelines.inspection.nodes.source]
+type = "CAMERA"
+value = {camera = {type = "IP", value = {ip = "192.0.2.20", port = 554}}}
+[pipelines.inspection.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 1000}
+[pipelines.remote.nodes.remote_source]
+type = "CAMERA"
+value = {camera = {type = "IP", value = {ip = "192.0.2.21", port = 554}}}
+[pipelines.remote.trigger]
+type = "PERIODIC"
+value = {scan_every_ms = 1000}

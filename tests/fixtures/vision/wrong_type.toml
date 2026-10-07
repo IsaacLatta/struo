@@ -1,0 +1,3 @@
+[pipelines.inspection]
+nodes = []
+trigger = {type = "PERIODIC", value = {scan_every_ms = 1000}}

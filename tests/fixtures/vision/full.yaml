@@ -1,0 +1,55 @@
+command_server: {ip: 127.0.0.1, port: 9090, password: fixture-admin}
+pipelines:
+  inspection:
+    nodes:
+      model:
+        type: MODEL
+        value:
+          image_node_name: prepare
+          model: {type: DETECTION, value: {class_names: {defect: 0, ok: 1}, confidence_threshold: 0.8}}
+      prepare:
+        type: PROCESS
+        value:
+          image_node_name: source
+          image_processors:
+            - {type: ROI, value: {origin: {x: 10, y: 20}, dimensions: {height: 480, width: 640}}}
+            - {type: RESIZE, value: {height: 224, width: 224}}
+            - {type: LETTERBOX, value: {target: {height: 256, width: 256}, padding: {red: 114, green: 115, blue: 116}}}
+      source:
+        type: CAMERA
+        value:
+          camera:
+            type: GIGE
+            value:
+              device_id: gige-01
+              preset_name: inspection
+              mbps: 2500
+              compression: true
+              crop: {origin: {x: 8, y: 12}, dimensions: {height: 720, width: 1280}}
+    trigger: {type: PERIODIC, value: {scan_every_ms: 250}}
+  sorting:
+    nodes:
+      model:
+        type: MODEL
+        value:
+          image_node_name: source
+          model: {type: CLASSIFICATION, value: {class_names: {accept: 0, reject: 1}}}
+      source:
+        type: CAMERA
+        value:
+          camera: {type: USB, value: {device_id: usb-01, preset_name: production}}
+    trigger: {type: SERIAL, value: {device: /dev/ttyTEST, baud_rate: 115200, message: SCAN}}
+  remote:
+    nodes:
+      model:
+        type: MODEL
+        value:
+          image_node_name: source
+          model: {type: SEGMENTATION, value: {class_names: {background: 0, part: 1}, mask_confidence_threshold: 0.7}}
+      source:
+        type: CAMERA
+        value:
+          camera:
+            type: IP
+            value: {ip: 192.0.2.10, port: 554, endpoint: /stream, username: fixture-user, password: fixture-password}
+    trigger: {type: HTTP, value: {path: /inspect}}

@@ -1,0 +1,1 @@
+Inert video-path fixture. Only file existence is checked; no video decoding occurs.
