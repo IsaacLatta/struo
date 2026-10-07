@@ -143,8 +143,8 @@ template<>
 struct SchemaTraits<www::Tls> {
     static auto schema() {
         return Object{
-            Field<&www::Tls::certificate>{Keys{"certificate"}, REQUIRED, Constraints{test_schemas::NonemptyPath}},
-            Field<&www::Tls::private_key>{Keys{"private_key"}, REQUIRED, Constraints{test_schemas::NonemptyPath}}
+            Field<&www::Tls::certificate>{Keys{"certificate"}, REQUIRED, Constraints{NotEmpty}},
+            Field<&www::Tls::private_key>{Keys{"private_key"}, REQUIRED, Constraints{NotEmpty}}
         };
     }
 };
@@ -164,8 +164,8 @@ template<>
 struct SchemaTraits<www::Timeouts> {
     static auto schema() {
         return Object{
-            Field<&www::Timeouts::request>{Keys{"request_ms"}, Defaults{[] { return www::std::chrono::milliseconds{30000}; }}, Constraints{test_schemas::PositiveDuration}},
-            Field<&www::Timeouts::idle>{Keys{"idle_ms"}, Defaults{[] { return www::std::chrono::milliseconds{60000}; }}, Constraints{test_schemas::PositiveDuration}}
+            Field<&www::Timeouts::request>{Keys{"request_ms"}, Defaults{[] { return std::chrono::milliseconds{30000}; }}, Constraints{test_schemas::PositiveDuration}},
+            Field<&www::Timeouts::idle>{Keys{"idle_ms"}, Defaults{[] { return std::chrono::milliseconds{60000}; }}, Constraints{test_schemas::PositiveDuration}}
         };
     }
 };
@@ -195,7 +195,7 @@ struct SchemaTraits<www::Upstream> {
     static auto schema() {
         return Object{
             Field<&www::Upstream::strategy>{Keys{"strategy"}, Defaults{Value<www::Strategy::ROUND_ROBIN>}},
-            Field<&www::Upstream::connect_timeout>{Keys{"connect_timeout_ms"}, Defaults{[] { return www::std::chrono::milliseconds{2000}; }}, Constraints{test_schemas::PositiveDuration}},
+            Field<&www::Upstream::connect_timeout>{Keys{"connect_timeout_ms"}, Defaults{[] { return std::chrono::milliseconds{2000}; }}, Constraints{test_schemas::PositiveDuration}},
             Field<&www::Upstream::endpoints>{Keys{"endpoints"}, REQUIRED, Constraints{NotEmpty}}
         };
     }
@@ -225,7 +225,7 @@ template<>
 struct SchemaTraits<www::RateLimit> {
     static auto schema() {
         return Object{
-            Field<&www::RateLimit::requests>{Keys{"requests"}, REQUIRED, Constraints{AtLeast<1>}},
+            Field<&www::RateLimit::requests>{Keys{"requests"}, REQUIRED, Constraints{Positive}},
             Field<&www::RateLimit::window>{Keys{"window_ms"}, REQUIRED, Constraints{test_schemas::PositiveDuration}},
             Field<&www::RateLimit::rejection_status>{Keys{"rejection_status"}, Defaults{Value<429>}, Constraints{Range<400, 599>}}
         };
@@ -265,7 +265,7 @@ template<>
 struct SchemaTraits<www::Match> {
     static auto schema() {
         return Object{
-            Field<&www::Match::path>{Keys{"path"}, REQUIRED, Constraints{test_schemas::HttpPath}},
+            Field<&www::Match::path>{Keys{"path"}, REQUIRED, Constraints{StartsWith<Str{"/"}>}},
             Field<&www::Match::mode>{Keys{"mode"}, Defaults{Value<www::MatchMode::EXACT>}},
             Field<&www::Match::methods>{Keys{"methods"}, Constraints{[](const auto& methods) { return methods ? NotEmpty(*methods) : ok(); }}}
         };
@@ -307,7 +307,7 @@ template<>
 struct SchemaTraits<www::StaticFiles> {
     static auto schema() {
         return Object{
-            Field<&www::StaticFiles::root>{Keys{"root"}, REQUIRED, Constraints{test_schemas::NonemptyPath}},
+            Field<&www::StaticFiles::root>{Keys{"root"}, REQUIRED, Constraints{NotEmpty}},
             Field<&www::StaticFiles::index>{Keys{"index"}, Defaults{[] { return std::string{"index.html"}; }}},
             Field<&www::StaticFiles::directory_listing>{Keys{"directory_listing"}, Defaults{Value<false>}}
         };
@@ -343,7 +343,7 @@ struct SchemaTraits<www::ErrorPage> {
     static auto schema() {
         return Object{
             Field<&www::ErrorPage::status>{Keys{"status"}, REQUIRED, Constraints{Range<400, 599>}},
-            Field<&www::ErrorPage::file>{Keys{"file"}, REQUIRED, Constraints{test_schemas::NonemptyPath}}
+            Field<&www::ErrorPage::file>{Keys{"file"}, REQUIRED, Constraints{NotEmpty}}
         };
     }
 };
