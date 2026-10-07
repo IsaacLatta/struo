@@ -6,7 +6,6 @@
 #include <string_view>
 
 #include "struo/parsing/JsonParser.hpp"
-#include "struo/struo.hpp"
 
 namespace {
 
@@ -156,48 +155,6 @@ TEST(JsonParser, ChildrenOwnTheirValues) {
     ASSERT_EQ(members.value().size(), 1u);
     EXPECT_EQ(get_value<std::string>(members.value()[0].first), "key");
     EXPECT_EQ(get_value<std::string>(members.value()[0].second), "value");
-}
-
-struct JsonSmokeConfig {
-    std::string name;
-    int port{};
-    std::map<std::string, int> limits;
-};
-
-} // namespace
-
-namespace struo {
-
-template<>
-struct SchemaTraits<JsonSmokeConfig> {
-    static auto schema() {
-        return Object{
-            Field<&JsonSmokeConfig::name>{Keys{"name", "label"}, REQUIRED},
-            Field<&JsonSmokeConfig::port>{Keys{"port"}, Defaults{Value<8080>}},
-            Field<&JsonSmokeConfig::limits>{Keys{"limits"}}
-        };
-    }
-};
-
-} // namespace struo
-
-namespace {
-
-TEST(JsonParser, LoadsSchemaWithAliasesDefaultsAndMaps) {
-    const auto result = load<JsonSmokeConfig>(JsonParser{json::parse(
-        R"({"label": "struo", "limits": {"workers": 4}})")});
-    ASSERT_TRUE(result) << result.error().what();
-    EXPECT_EQ(result.value().name, "struo");
-    EXPECT_EQ(result.value().port, 8080);
-    EXPECT_EQ(result.value().limits.at("workers"), 4);
-}
-
-TEST(JsonParser, LoadReportsConversionErrorWithPath) {
-    const auto result = load<JsonSmokeConfig>(JsonParser{json::parse(
-        R"({"name": "struo", "limits": {"workers": "invalid"}})")});
-    ASSERT_FALSE(result);
-    EXPECT_EQ(result.error().code(), INVALID_VALUE);
-    EXPECT_TRUE(result.error().what().starts_with("limits[\"workers\"]: ")) << result.error().what();
 }
 
 } // namespace

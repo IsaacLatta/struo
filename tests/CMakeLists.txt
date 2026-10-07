@@ -4,7 +4,7 @@ add_executable(struo_tests)
 
 target_sources(struo_tests
         PRIVATE
-        unit/unit_yaml_parsing.cpp
+        unit/unit_defaults.cpp
         unit/unit_variants.cpp
         unit/unit_optionals.cpp
         unit/unit_yaml_parser.cpp

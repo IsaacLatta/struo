@@ -85,7 +85,8 @@ and TOML.
 4. Author matching documents for every applicable case in each scenario's
    fixture directory.
 5. Author tests loading each of your applicable cases.
-6. 
+
+
 For a new scenario, derive its typed fixture from `e2e::FixtureTest<Config, Descriptor>`,
 register against `e2e::AllFormats`, call `loadCase(scenario, stem)` (or pass `false`
 for intentional syntax errors), place its source under `e2e/`, and add it to the E2E target. Expectation code
