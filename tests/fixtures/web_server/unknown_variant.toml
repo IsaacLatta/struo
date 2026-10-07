@@ -1,0 +1,5 @@
+listeners = [{port = 8080}]
+[[routes]]
+name = "health"
+match = {path = "/health"}
+action = {type = "UNKNOWN", value = {status = 200}}

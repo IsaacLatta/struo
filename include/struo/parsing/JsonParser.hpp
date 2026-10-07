@@ -21,7 +21,7 @@ namespace struo {
         explicit JsonParser(nlohmann::json node) : node_(std::move(node)) {}
 
         template<typename T>
-        requires (!IsChronoDuration<T> && !std::same_as<T, std::filesystem::path>)
+        requires (!std::is_enum_v<T> && !IsChronoDuration<T> && !std::same_as<T, std::filesystem::path>)
         [[nodiscard]] Result<T> getAs() const {
             if(!node_.is_string() && !node_.is_boolean() && !node_.is_number()) {
                 return err(WRONG_TYPE, std::format("expected scalar, got {}", node_.type_name()));

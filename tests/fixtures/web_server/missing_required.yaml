@@ -1,0 +1,5 @@
+listeners: [{}]
+routes:
+  - name: health
+    match: {path: /health}
+    action: {type: RESPOND, value: {status: 200}}

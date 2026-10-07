@@ -1,0 +1,16 @@
+{
+  "name": "defaults",
+  "listeners": [{"port": 8080}],
+  "timeouts": {}, "logging": {}, "middleware": {},
+  "upstreams": {"api": {"endpoints": [{"host": "service.local", "port": 9000}]}},
+  "routes": [
+    {"name": "health", "match": {"path": "/health"}, "middleware": {},
+     "action": {"type": "RESPOND", "value": {"status": 200}}},
+    {"name": "api", "match": {"path": "/api"},
+     "action": {"type": "PROXY", "value": {"upstream": "api"}}},
+    {"name": "redirect", "match": {"path": "/old"},
+     "action": {"type": "REDIRECT", "value": {"location": "/new"}}},
+    {"name": "assets", "match": {"path": "/assets"},
+     "action": {"type": "STATIC_FILES", "value": {"root": "public"}}}
+  ]
+}

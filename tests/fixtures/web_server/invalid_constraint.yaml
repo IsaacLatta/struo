@@ -1,0 +1,9 @@
+listeners: [{port: 8080}]
+upstreams:
+  api:
+    connect_timeout_ms: 0
+    endpoints: [{host: service.local, port: 9000}]
+routes:
+  - name: health
+    match: {path: /health}
+    action: {type: RESPOND, value: {status: 200}}

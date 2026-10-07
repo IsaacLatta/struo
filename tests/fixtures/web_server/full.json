@@ -1,0 +1,54 @@
+{
+  "name": "edge",
+  "listeners": [
+    {"address": "127.0.0.1", "port": 8080},
+    {"address": "0.0.0.0", "port": 8443,
+     "tls": {"certificate": "certs/server.pem", "private_key": "certs/server.key"}}
+  ],
+  "timeouts": {"request_ms": 12000, "idle_ms": 45000},
+  "logging": {"level": "DEBUG", "access_log": false},
+  "upstreams": {"api": {
+    "strategy": "RANDOM", "connect_timeout_ms": 1500,
+    "endpoints": [{"host": "api-a.local", "port": 9000}, {"host": "api-b.local", "port": 9001}]
+  }},
+  "middleware": {
+    "before": [
+      {"type": "REQUEST_HEADERS", "value": {"set": {"X-Request-Source": "edge"}, "remove": ["X-Internal"]}},
+      {"type": "RATE_LIMIT", "value": {"requests": 100, "window_ms": 60000, "rejection_status": 503}}
+    ],
+    "after": [
+      {"type": "RESPONSE_HEADERS", "value": {"set": {"X-Served-By": "struo"}, "remove": ["X-Powered-By"]}}
+    ]
+  },
+  "routes": [
+    {
+      "name": "health",
+      "match": {"path": "/health", "mode": "EXACT", "methods": ["GET", "HEAD"]},
+      "middleware": {
+        "before": [{"type": "RATE_LIMIT", "value": {"requests": 30, "window_ms": 1000, "rejection_status": 429}}],
+        "after": [{"type": "RESPONSE_HEADERS", "value": {"set": {"X-Health": "true"}, "remove": []}}]
+      },
+      "action": {"type": "RESPOND", "value": {"status": 200, "body": "{\"status\":\"ok\"}", "content_type": "application/json"}}
+    },
+    {
+      "name": "api",
+      "match": {"path": "/api", "mode": "PREFIX", "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]},
+      "middleware": {
+        "before": [{"type": "REQUEST_HEADERS", "value": {"set": {"X-Proxy-Mode": "api"}, "remove": ["X-Old-Proxy"]}}],
+        "after": []
+      },
+      "action": {"type": "PROXY", "value": {"upstream": "api", "strip_prefix": true}}
+    },
+    {
+      "name": "redirect",
+      "match": {"path": "/old", "mode": "EXACT", "methods": ["GET"]},
+      "action": {"type": "REDIRECT", "value": {"location": "/new", "status": 308}}
+    },
+    {
+      "name": "assets",
+      "match": {"path": "/assets", "mode": "PREFIX", "methods": ["GET", "HEAD"]},
+      "action": {"type": "STATIC_FILES", "value": {"root": "public", "index": "home.html", "directory_listing": true}}
+    }
+  ],
+  "error_pages": [{"status": 404, "file": "errors/404.html"}, {"status": 503, "file": "errors/503.html"}]
+}

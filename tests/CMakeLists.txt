@@ -38,3 +38,15 @@ target_link_libraries(struo_tests
 include(GoogleTest)
 
 gtest_discover_tests(struo_tests)
+
+add_executable(struo_e2e_tests e2e_web_server.cpp)
+target_include_directories(struo_e2e_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(struo_e2e_tests PRIVATE struo::struo GTest::gtest_main)
+target_compile_definitions(struo_e2e_tests PRIVATE
+    STRUO_TEST_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+)
+gtest_discover_tests(struo_e2e_tests
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/fixtures
+    TEST_PREFIX "e2e."
+    PROPERTIES LABELS "e2e"
+)

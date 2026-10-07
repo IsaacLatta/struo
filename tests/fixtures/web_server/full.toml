@@ -1,0 +1,119 @@
+name = "edge"
+
+[[listeners]]
+address = "127.0.0.1"
+port = 8080
+[[listeners]]
+address = "0.0.0.0"
+port = 8443
+[listeners.tls]
+certificate = "certs/server.pem"
+private_key = "certs/server.key"
+
+[timeouts]
+request_ms = 12000
+idle_ms = 45000
+[logging]
+level = "DEBUG"
+access_log = false
+[upstreams.api]
+strategy = "RANDOM"
+connect_timeout_ms = 1500
+[[upstreams.api.endpoints]]
+host = "api-a.local"
+port = 9000
+[[upstreams.api.endpoints]]
+host = "api-b.local"
+port = 9001
+
+[[middleware.before]]
+type = "REQUEST_HEADERS"
+[middleware.before.value]
+set = {"X-Request-Source" = "edge"}
+remove = ["X-Internal"]
+[[middleware.before]]
+type = "RATE_LIMIT"
+[middleware.before.value]
+requests = 100
+window_ms = 60000
+rejection_status = 503
+[[middleware.after]]
+type = "RESPONSE_HEADERS"
+[middleware.after.value]
+set = {"X-Served-By" = "struo"}
+remove = ["X-Powered-By"]
+
+[[routes]]
+name = "health"
+[routes.match]
+path = "/health"
+mode = "EXACT"
+methods = ["GET", "HEAD"]
+[[routes.middleware.before]]
+type = "RATE_LIMIT"
+[routes.middleware.before.value]
+requests = 30
+window_ms = 1000
+rejection_status = 429
+[[routes.middleware.after]]
+type = "RESPONSE_HEADERS"
+[routes.middleware.after.value]
+set = {"X-Health" = "true"}
+remove = []
+[routes.action]
+type = "RESPOND"
+[routes.action.value]
+status = 200
+body = '{"status":"ok"}'
+content_type = "application/json"
+
+[[routes]]
+name = "api"
+[routes.match]
+path = "/api"
+mode = "PREFIX"
+methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+[routes.middleware]
+after = []
+[[routes.middleware.before]]
+type = "REQUEST_HEADERS"
+[routes.middleware.before.value]
+set = {"X-Proxy-Mode" = "api"}
+remove = ["X-Old-Proxy"]
+[routes.action]
+type = "PROXY"
+[routes.action.value]
+upstream = "api"
+strip_prefix = true
+
+[[routes]]
+name = "redirect"
+[routes.match]
+path = "/old"
+mode = "EXACT"
+methods = ["GET"]
+[routes.action]
+type = "REDIRECT"
+[routes.action.value]
+location = "/new"
+status = 308
+
+[[routes]]
+name = "assets"
+[routes.match]
+path = "/assets"
+mode = "PREFIX"
+methods = ["GET", "HEAD"]
+[routes.action]
+type = "STATIC_FILES"
+[routes.action.value]
+root = "public"
+index = "home.html"
+directory_listing = true
+
+[[error_pages]]
+status = 404
+file = "errors/404.html"
+[[error_pages]]
+status = 503
+file = "errors/503.html"
