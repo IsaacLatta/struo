@@ -3,6 +3,7 @@
 #include "struo/Field.hpp"
 #include "struo/transforms.hpp"
 #include "struo/Variant.hpp"
+#include "struo/Object.hpp"
 
 #include <gtest/gtest.h>
 #include <array>
@@ -93,6 +94,22 @@ static_assert(!CanMakeAtLeast<Str{"a"}> && !CanMakeAtMost<Str{"a"}>);
 struct Config { int number; std::vector<int> numbers; std::string text; std::optional<int> optional; };
 using NumberField = Field<&Config::number>;
 using NumbersField = Field<&Config::numbers>;
+static_assert(IsField<NumberField>);
+static_assert(IsField<const NumberField&>);
+static_assert(IsField<NumbersField&&>);
+static_assert(!IsField<int>);
+static_assert(!IsField<Keys>);
+struct FieldLookalike { using value_type = int; };
+static_assert(!IsField<FieldLookalike>);
+template<typename... Fields>
+concept CanMakeObject = requires(Fields... fields) { Object{fields...}; };
+static_assert(CanMakeObject<>);
+static_assert(CanMakeObject<NumberField>);
+static_assert(CanMakeObject<NumberField, NumbersField>);
+static_assert(!CanMakeObject<int>);
+static_assert(!CanMakeObject<NumberField, int>);
+static_assert(!CanMakeObject<FieldLookalike>);
+
 template<typename F, typename Arg>
 concept CanMakeField = requires(Arg arg) { F{Keys{"value"}, arg}; };
 static_assert(CanMakeField<NumberField, decltype(Constraints{Positive})>);

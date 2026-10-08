@@ -47,6 +47,9 @@ template<typename Rep, typename Period>
 struct IsChronoDurationImpl<std::chrono::duration<Rep, Period>> : std::true_type {};
 
 template<typename T>
+struct IsFieldImpl : std::false_type {};
+
+template<typename T>
 struct IsVariantImpl : std::false_type {};
 
 template<typename... Ts>

@@ -138,11 +138,7 @@ struct IfPresentTransformT {
 template<auto... Inners>
 struct ForEachTransformT {
     template<typename T>
-    requires IsSequence<T> && std::ranges::input_range<const T> &&
-        std::default_initializable<T> &&
-        (requires(const typename T::value_type& element) {
-            Result<typename T::value_type>{std::invoke(Inners, element)};
-        } && ...)
+    requires IsSequence<T> && (IsTransformFor<decltype(Inners), typename T::value_type> && ...) && std::default_initializable<T>
     constexpr Result<T> operator()(const T& value) const {
         T transformed{};
         size_t index{0u};

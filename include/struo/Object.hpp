@@ -5,12 +5,14 @@
 #include <functional>
 
 #include "struo/forward.hpp"
+#include "struo/Field.hpp"
 #include "struo/concepts.hpp"
 #include "struo/Result.hpp"
 
 namespace struo {
 
     template<typename... Fields>
+    requires (IsField<Fields> && ...)
     class Object {
     public:
         explicit constexpr Object(Fields... fields) : fields_{std::move(fields)...} {}

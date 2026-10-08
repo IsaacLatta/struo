@@ -135,3 +135,10 @@ namespace struo {
         std::vector<ConstraintFunc> constraints_{};
     };
 }
+
+namespace struo::detail {
+
+template<auto Member>
+struct IsFieldImpl<Field<Member>> : std::true_type {};
+
+} // namespace struo::detail

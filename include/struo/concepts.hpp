@@ -3,6 +3,7 @@
 #include <concepts>
 #include <chrono>
 #include <filesystem>
+#include <ranges>
 #include <type_traits>
 #include <variant>
 #include <optional>
@@ -53,6 +54,9 @@ template<typename T>
 concept IsStringLike = std::convertible_to<const T&, std::string_view>;
 
 template<typename T>
+concept IsField = detail::IsFieldImpl<std::remove_cvref_t<T>>::value;
+
+template<typename T>
 concept IsVariant = detail::IsVariantImpl<std::remove_cvref_t<T>>::value;
 
 template<typename Callable, typename Signature>
@@ -100,13 +104,18 @@ concept IsScalar = std::is_arithmetic_v<std::remove_cvref_t<T>> ||
     IsChronoDuration<T> ||
     std::same_as<std::remove_cvref_t<T>, std::filesystem::path>;
 
+template<typename Callable, typename Value>
+concept IsTransformFor = requires(Callable& callable, const Value& value) {
+    Result<Value>{std::invoke(callable, value)};
+};
+
 template<typename T>
 concept IsSequence = requires {
     typename T::value_type;
 } && requires(T& array, typename T::value_type value) {
     array.emplace_back(value);
     { array.size() } -> std::convertible_to<size_t>;
-} && !IsScalar<T> ;
+} && !IsScalar<T> && std::ranges::input_range<const T>;
 
 template<typename T>
 concept IsMap = requires {

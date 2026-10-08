@@ -133,8 +133,7 @@ namespace struo::detail {
         }
 
         template<typename T>
-        requires IsSequence<T> && std::ranges::input_range<const T> &&
-            (IsConstraintFor<decltype((Constraints)), std::remove_reference_t<std::ranges::range_reference_t<const T>>> && ...)
+        requires IsSequence<T> && (IsConstraintFor<decltype(Constraints), typename T::value_type> && ...)
         constexpr Result<void> operator()(const T& value) const {
             Result<void> final_result { ok() };
             size_t i { 0u };
