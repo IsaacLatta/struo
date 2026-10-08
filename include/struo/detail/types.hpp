@@ -36,7 +36,9 @@ struct HasFunctionSignatureImpl : std::false_type {};
 
 template<typename Callable, typename Return, typename... Args>
 struct HasFunctionSignatureImpl<Callable, Return(Args...)> :
-    std::bool_constant<std::same_as<std::invoke_result_t<Callable&, Args...>, Return>> {};
+    std::bool_constant<requires(Callable& callable, Args... args) {
+        { std::invoke(callable, std::forward<Args>(args)...) } -> std::same_as<Return>;
+    }> {};
 
 template<typename T>
 struct IsChronoDurationImpl : std::false_type {};

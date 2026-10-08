@@ -6,6 +6,15 @@
 #include <type_traits>
 #include <variant>
 #include <optional>
+#include <format>
+#include <functional>
+#include <cstddef>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "struo/Result.hpp"
 
 #include "struo/detail/types.hpp"
 
@@ -13,8 +22,29 @@ namespace struo {
 
 template<typename T>
 concept HasEmptyApi = requires(const T& t) {
-    t.empty();
+    { t.empty() } -> std::convertible_to<bool>;
 };
+
+template<typename Callable, typename Value>
+concept IsConstraintFor = requires(Callable& callable, const Value& value) {
+    { std::invoke(callable, value) } -> std::same_as<Result<void>>;
+};
+
+template<typename Left, typename Right>
+concept IsEqualityComparableWith = requires(const Left& left, const Right& right) {
+    { left == right } -> std::convertible_to<bool>;
+};
+
+template<typename T>
+concept HasSizeApi = requires(const T& value) {
+    { value.size() } -> std::same_as<size_t>;
+};
+
+template<typename T>
+concept HasFormatter = std::is_default_constructible_v<std::formatter<std::remove_cvref_t<T>, char>>;
+
+template<auto Min, auto Max>
+concept IsValidRangeBounds = std::same_as<decltype(Min), decltype(Max)> && requires { requires (Min <= Max); };
 
 template<typename T>
 concept IsOptional = detail::IsOptionalImpl<std::remove_cvref_t<T>>::value;
@@ -67,6 +97,11 @@ concept IsMap = requires {
 template<typename T>
 concept HasSchema = requires {
     SchemaTraits<T>::schema();
+};
+
+template<typename Parser, typename Value>
+concept HasGetAsFor = requires(const std::remove_reference_t<Parser>& parser) {
+    { parser.template getAs<Value>() } -> std::same_as<Result<Value>>;
 };
 
 template<typename T>

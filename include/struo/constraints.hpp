@@ -12,15 +12,21 @@
 namespace struo {
 
 template<auto Min, auto Max>
+requires IsValidRangeBounds<Min, Max>
 inline constexpr auto Range { detail::RangeConstraint<Min, Max>{} };
 
 template<auto Min>
+requires (std::numeric_limits<decltype(Min)>::is_specialized &&
+    IsValidRangeBounds<Min, std::numeric_limits<decltype(Min)>::max()>)
 inline constexpr auto AtLeast { detail::RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
 
 template<auto Max>
+requires (std::numeric_limits<decltype(Max)>::is_specialized &&
+    IsValidRangeBounds<std::numeric_limits<decltype(Max)>::lowest(), Max>)
 inline constexpr auto AtMost { detail::RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
 
 template<size_t Min, size_t Max>
+requires (Min <= Max)
 inline constexpr auto SizeRange { detail::SizeRangeConstraint<Min, Max>{} };
 
 template<size_t Min>

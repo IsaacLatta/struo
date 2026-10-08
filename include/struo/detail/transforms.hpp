@@ -7,6 +7,7 @@
 #include <format>
 #include <functional>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -108,6 +109,9 @@ struct AddPrefixT {
 template<auto... Inners>
 struct IfPresentTransformT {
     template<typename T>
+    requires (requires(const T& element) {
+        Result<T>{std::invoke(Inners, element)};
+    } && ...)
     constexpr Result<std::optional<T>> operator()(const std::optional<T>& value) const {
         if(!value) {
             return std::optional<T>{};
@@ -134,7 +138,11 @@ struct IfPresentTransformT {
 template<auto... Inners>
 struct ForEachTransformT {
     template<typename T>
-    requires IsSequence<T>
+    requires IsSequence<T> && std::ranges::input_range<const T> &&
+        std::default_initializable<T> &&
+        (requires(const typename T::value_type& element) {
+            Result<typename T::value_type>{std::invoke(Inners, element)};
+        } && ...)
     constexpr Result<T> operator()(const T& value) const {
         T transformed{};
         size_t index{0u};

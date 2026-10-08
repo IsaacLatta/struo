@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iterator>
 
+#include "struo/concepts.hpp"
 #include "struo/forward.hpp"
 #include "struo/defaults.hpp"
 
@@ -16,6 +17,7 @@
 namespace struo {
 
     template<auto Member>
+    requires HasMemberTraits<decltype(Member)> && std::is_member_object_pointer_v<decltype(Member)> && (Member != nullptr)
     class Field {
     public:
         using member_traits = detail::MemberTraits<decltype(Member)>;
@@ -103,16 +105,20 @@ namespace struo {
         }
 
         template<typename... Callables>
+        requires (HasFunctionSignature<Callables, DefaultResult()> && ...)
         constexpr void apply(Defaults<Callables...> defaults) {
             detail::apply_and_wrap_arg_func_pack<value_type, DefaultResult>(std::move(defaults), defaults_);
         }
 
         template<typename... Callables>
+        requires (HasFunctionSignature<Callables, Result<void>(const value_type&)> && ...)
         constexpr void apply(Constraints<Callables...> constraints) {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<void>, detail::ConstraintOperation>(std::move(constraints), constraints_);
         }
 
         template<typename... Callables>
+        requires ((HasFunctionSignature<Callables, Result<value_type>(const value_type&)> ||
+                    HasFunctionSignature<Callables, value_type(const value_type&)>) && ...)
         constexpr void apply(Transforms<Callables...> transforms) {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<value_type>, detail::TransformOperation>(std::move(transforms), transforms_);
         }

@@ -33,7 +33,7 @@ namespace struo::detail {
 
     template<typename Field, typename Parser>
     Result<void> parse_field(Field& field, Parser& parser, TraversalContext& context) {
-        static_assert(AreMutableLValueReferences<decltype(field), decltype(parser)>);
+        static_assert(AreMutableLValueReferences<decltype(field)>);
 
         using field_type = std::remove_cvref_t<decltype(field)>;
         using value_type = typename field_type::value_type;
@@ -65,7 +65,7 @@ namespace struo::detail {
 
     template<typename Object, typename Parser>
     constexpr Result<void> parse_object(Object& object, Parser& parser, TraversalContext& context) {
-        static_assert(AreMutableLValueReferences<decltype(object), decltype(parser)>);
+        static_assert(AreMutableLValueReferences<decltype(object)>);
 
         return object.forEachField([&](auto& field) -> Result<void> {
             static_assert(AreMutableLValueReferences<decltype(field)>);
@@ -76,7 +76,6 @@ namespace struo::detail {
 
     template<typename Sequence, typename Parser>
     constexpr ParseResult<Sequence> parse_sequence(Parser& parser, TraversalContext& context) {
-        static_assert(AreMutableLValueReferences<decltype(parser)>);
 
         using staged_type = typename detail::ValueTraits<Sequence>::staged_type;
         using element_type = typename detail::ValueTraits<Sequence>::element_type;
@@ -107,7 +106,6 @@ namespace struo::detail {
 
     template<typename Map, typename Parser>
     constexpr ParseResult<Map> parse_map(Parser& parser, TraversalContext& context) {
-        static_assert(AreMutableLValueReferences<decltype(parser)>);
 
         using staged_type = typename detail::ValueTraits<Map>::staged_type;
         using key_type = typename detail::ValueTraits<Map>::key_type;

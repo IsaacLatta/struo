@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <utility>
 
+#include "struo/concepts.hpp"
 #include "struo/forward.hpp"
 #include "struo/Result.hpp"
 
@@ -21,6 +22,7 @@ using Json = detail::JsonParser;
 using Toml = detail::TomlParser;
 
 template<typename UserObject, typename Parser>
+requires HasSchema<UserObject> && IsOneOf<Parser, Yaml, Json, Toml>
 constexpr Result<UserObject> load(Parser&& parser) {
     auto parsed = detail::parse<UserObject>(std::forward<Parser>(parser));
     if(!parsed) {
@@ -29,7 +31,8 @@ constexpr Result<UserObject> load(Parser&& parser) {
     return detail::materialize<UserObject>(*parsed);
 }
 
-template<typename UserObject, detail::HasFormatReader Format>
+template<typename UserObject, typename Format>
+requires HasSchema<UserObject> && IsOneOf<Format, Yaml, Json, Toml>
 [[nodiscard]] Result<UserObject> load(const std::filesystem::path& path) {
     auto contents = detail::read_file(path);
     if (!contents) {

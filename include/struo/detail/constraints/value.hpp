@@ -12,9 +12,6 @@
 
 namespace struo::detail {
 
-    template<typename T>
-    concept HasFormatter = std::is_default_constructible_v<std::formatter<std::remove_cvref_t<T>, char>>;
-
     template<auto... Values>
     struct OneOfConstraint {
         static constexpr std::string_view name() {
@@ -30,7 +27,9 @@ namespace struo::detail {
             }
         }
 
-        constexpr Result<void> operator()(const auto& t) const {
+        template<typename T>
+        requires (IsEqualityComparableWith<decltype(Values), T> && ...)
+        constexpr Result<void> operator()(const T& t) const {
             const auto compare = [&](const auto& val) {
                 return !(val == t);
             };
@@ -115,6 +114,9 @@ namespace struo::detail {
         }
 
         template<typename T>
+        requires HasFormatter<T> && requires(const T& value) {
+            { value > 0 } -> std::convertible_to<bool>;
+        }
         constexpr Result<void> operator()(const T& t) const {
             if constexpr (std::is_floating_point_v<T>) {
                 if(t > 0.0f) {

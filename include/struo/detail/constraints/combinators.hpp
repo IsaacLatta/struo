@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <ranges>
 #include <format>
 #include <string>
 #include <string_view>
@@ -19,7 +20,9 @@ namespace struo::detail {
             return "or";
         }
 
-        constexpr Result<void> operator()(const auto& value) const {
+        template<typename T>
+        requires (IsConstraintFor<decltype((Constraints)), T> && ...)
+        constexpr Result<void> operator()(const T& value) const {
             std::string failures;
             auto invoke_one = [&](const auto& constraint) {
                 auto result = std::invoke(constraint, value);
@@ -47,7 +50,9 @@ namespace struo::detail {
             return "and";
         }
 
-        constexpr Result<void> operator()(const auto& value) const {
+        template<typename T>
+        requires (IsConstraintFor<decltype((Constraints)), T> && ...)
+        constexpr Result<void> operator()(const T& value) const {
             Result<void> final_result { ok() };
             auto invoke_one = [&](const auto& constraint) {
                 if(auto result = std::invoke(constraint, value); !result) {
@@ -68,7 +73,9 @@ namespace struo::detail {
             return "not";
         }
 
-        constexpr Result<void> operator()(const auto& value) const {
+        template<typename T>
+        requires IsConstraintFor<decltype((Constraint)), T>
+        constexpr Result<void> operator()(const T& value) const {
             if(auto result = std::invoke(Constraint, value); !result.ok()) {
                 return ok();
             }
@@ -83,7 +90,9 @@ namespace struo::detail {
             return "exactly one";
         }
 
-        constexpr Result<void> operator()(const auto& value) const {
+        template<typename T>
+        requires (IsConstraintFor<decltype((Constraints)), T> && ...)
+        constexpr Result<void> operator()(const T& value) const {
             size_t n_succeeded { 0u };
             std::string failures;
             std::string matches;
@@ -124,7 +133,8 @@ namespace struo::detail {
         }
 
         template<typename T>
-        requires IsSequence<T>
+        requires IsSequence<T> && std::ranges::input_range<const T> &&
+            (IsConstraintFor<decltype((Constraints)), std::remove_reference_t<std::ranges::range_reference_t<const T>>> && ...)
         constexpr Result<void> operator()(const T& value) const {
             Result<void> final_result { ok() };
             size_t i { 0u };

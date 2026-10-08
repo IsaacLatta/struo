@@ -64,7 +64,7 @@ constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pac
     std::apply([&](auto&&... callable){
         (container.emplace_back([func = KeywordTraits<Operation, std::remove_cvref_t<decltype(callable)>>::adapt(
             std::forward<decltype(callable)>(callable))](auto&&... args) mutable -> ReturnType {
-            if constexpr (std::invocable<decltype(func), decltype(args)...>) {
+            if constexpr (std::invocable<decltype(func)&, decltype(args)...>) {
                 return ReturnType { std::invoke(func, std::forward<decltype(args)>(args)...) };
             } else {
                 return ReturnType { func.template operator()<ValueType>( std::forward<decltype(args)>(args)...) };
