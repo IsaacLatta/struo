@@ -16,6 +16,29 @@
 
 namespace struo {
 
+    /**
+     * @brief Describes how a configuration value is loaded into a struct member.
+     * @tparam Member A non-null pointer to the member, such as &Config::port.
+     *
+     * Construct fields inside an Object returned by SchemaTraits<Config>::schema().
+     * Each field defines its accepted keys and may provide defaults, transforms,
+     * constraints, etc.
+     *
+     * @code{.cpp}
+     * struct Config {
+     *     int port{};
+     * };
+     *
+     * template<>
+     * struct struo::SchemaTraits<Config> {
+     *     static auto schema() {
+     *         return struo::Object{
+     *             struo::Field<&Config::port>{struo::Keys{"port"}, struo::REQUIRED}
+     *         };
+     *     }
+     * };
+     * @endcode
+     */
     template<auto Member>
     requires HasMemberTraits<decltype(Member)> && std::is_member_object_pointer_v<decltype(Member)> && (Member != nullptr)
     class Field {
@@ -26,6 +49,30 @@ namespace struo {
         using staged_type = typename value_traits::staged_type;
 
     public:
+        /**
+         * @brief Constructs a field from its keys and optional settings.
+         * @param args One Keys argument, plus optional Description, Presence,
+         *             Defaults, Transforms, and Constraints arguments, in any order.
+         *
+         * Keys are checked in order, the first present key is used. One can pass
+         * and empty set of keys to force instantiation from defaults (e.g., for an environment variable).
+         * Fields are OPTIONAL by default. If no key or default supplies a value, an optional
+         * field retains its member initializer, while a REQUIRED field fails loading.
+         * A default can satisfy a REQUIRED field.
+         *
+         * Defaults are tried in order until one supplies a value. an error stops
+         * loading. Transforms then run in order, followed by constraints. Either
+         * stops loading at the first failure. This order does not depend on the
+         * order of the constructor arguments.
+         *
+         * @code{.cpp}
+         * Field<&Config::port>{
+         *     Keys{"port", "listen_port"},
+         *     Defaults{Value<8080>},
+         *     Constraints{Range<1, 65535>}
+         * }
+         * @endcode
+         */
         template<typename... Args>
         requires IsOneOf<Keys, Args...> && AllAppearAtMostOnce<Args...>
         constexpr explicit Field(Args&&... args) {

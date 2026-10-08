@@ -22,6 +22,12 @@
 namespace struo {
 
 template<typename T>
+concept IsBinding = requires {
+    typename T::value_type;
+    { T::tag } -> std::convertible_to<std::string_view>;
+};
+
+template<typename T>
 concept HasEmptyApi = requires(const T& t) {
     { t.empty() } -> std::convertible_to<bool>;
 };
