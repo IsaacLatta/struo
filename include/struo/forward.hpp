@@ -27,8 +27,6 @@ namespace struo {
 
     using Keys = detail::TaggedAlias<std::vector<std::string_view>, struct TagKeys>;
 
-    using Description = detail::TaggedAlias<std::string_view, struct TagDescription>;
-
     template<typename... Callables>
     using Defaults = detail::TaggedArgPack<struct TagDefaults, Callables...>;
 

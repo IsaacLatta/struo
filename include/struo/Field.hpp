@@ -116,10 +116,6 @@ namespace struo {
             return aliases_.value.empty() ? std::string_view{"<unnamed-field>"} : aliases_.value.front();
         }
 
-        [[nodiscard]] constexpr Description getDescription() const noexcept {
-            return description_;
-        }
-
         [[nodiscard]] constexpr auto getKeys() const noexcept {
             return std::ranges::views::all(aliases_.value);
         }
@@ -139,10 +135,6 @@ namespace struo {
         using TransformFunc = std::function<Result<value_type>(const value_type&)>;
 
     private:
-        constexpr void apply(Description description) {
-            description_ = description;
-        }
-
         constexpr void apply(Keys aliases) {
             std::ranges::move(aliases.value, std::back_inserter(aliases_.value));
         }
@@ -173,7 +165,6 @@ namespace struo {
 
     private:
         Keys aliases_{};
-        Description description_{};
         Presence presence_ { OPTIONAL };
         std::optional<std::string_view> parsed_as_key_{};
         std::optional<staged_type> staged_value_{};
