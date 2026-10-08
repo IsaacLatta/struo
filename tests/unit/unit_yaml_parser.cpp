@@ -4,13 +4,13 @@
 #include <string>
 #include <string_view>
 
-#include "struo/parsing/YamlParser.hpp"
+#include "struo/parsing.hpp"
 
 namespace {
 
 using namespace struo;
 
-std::optional<YamlParser> get_child(const YamlParser& parser, std::string_view key) {
+std::optional<Yaml> get_child(const Yaml& parser, std::string_view key) {
     auto result = parser.toChild(key);
 
     EXPECT_TRUE(result);
@@ -27,7 +27,7 @@ std::optional<YamlParser> get_child(const YamlParser& parser, std::string_view k
 }
 
 template<typename T>
-std::optional<T> get_value(const YamlParser& parser) {
+std::optional<T> get_value(const Yaml& parser) {
     auto result = parser.getAs<T>();
 
     EXPECT_TRUE(result);
@@ -39,7 +39,7 @@ std::optional<T> get_value(const YamlParser& parser) {
 }
 
 template<typename T>
-std::optional<T> get_child_value(const YamlParser& parser, std::string_view key) {
+std::optional<T> get_child_value(const Yaml& parser, std::string_view key) {
     auto child = get_child(parser, key);
     if (!child) {
         return std::nullopt;
@@ -49,7 +49,7 @@ std::optional<T> get_child_value(const YamlParser& parser, std::string_view key)
 }
 
 TEST(YamlParser, TraversesScalars) {
-    const YamlParser parser{
+    const Yaml parser{
         YAML::Load(R"(
 name: struo
 port: 8080
@@ -76,7 +76,7 @@ ratio: 1.25
 }
 
 TEST(YamlParser, TraversesSequenceOfObjects) {
-    const YamlParser parser{
+    const Yaml parser{
         YAML::Load(R"(
 servers:
   - name: first
@@ -111,7 +111,7 @@ servers:
 }
 
 TEST(YamlParser, TraversesMapOfObjects) {
-    const YamlParser parser{
+    const Yaml parser{
         YAML::Load(R"(
 databases:
   primary:
@@ -163,7 +163,7 @@ databases:
 }
 
 TEST(YamlParser, MissingChildReturnsEmptyOptional) {
-    const YamlParser parser{
+    const Yaml parser{
         YAML::Load("name: struo")
     };
 
@@ -174,7 +174,7 @@ TEST(YamlParser, MissingChildReturnsEmptyOptional) {
 }
 
 TEST(YamlParser, InvalidScalarConversionReturnsInvalidValue) {
-    const YamlParser parser { YAML::Load("not-an-integer") };
+    const Yaml parser { YAML::Load("not-an-integer") };
 
     auto result = parser.getAs<int>();
 
@@ -183,7 +183,7 @@ TEST(YamlParser, InvalidScalarConversionReturnsInvalidValue) {
 }
 
 TEST(YamlParser, ScalarIsNotSequence) {
-    const YamlParser parser { YAML::Load("hello") };
+    const Yaml parser { YAML::Load("hello") };
 
     auto result = parser.getElements();
 
@@ -192,7 +192,7 @@ TEST(YamlParser, ScalarIsNotSequence) {
 }
 
 TEST(YamlParser, ScalarIsNotMap) {
-    const YamlParser parser { YAML::Load("hello") };
+    const Yaml parser { YAML::Load("hello") };
 
     auto result = parser.getMembers();
 
@@ -201,7 +201,7 @@ TEST(YamlParser, ScalarIsNotMap) {
 }
 
 TEST(YamlParser, SequenceIsNotScalar) {
-    const YamlParser parser { YAML::Load("[1, 2, 3]") };
+    const Yaml parser { YAML::Load("[1, 2, 3]") };
 
     auto result = parser.getAs<int>();
 
@@ -210,7 +210,7 @@ TEST(YamlParser, SequenceIsNotScalar) {
 }
 
 TEST(YamlParser, MapIsNotScalar) {
-    const YamlParser parser { YAML::Load("{foo: bar}") };
+    const Yaml parser { YAML::Load("{foo: bar}") };
 
     auto result = parser.getAs<std::string>();
 

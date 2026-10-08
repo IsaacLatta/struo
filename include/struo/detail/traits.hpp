@@ -17,7 +17,7 @@
 
 #include "struo/detail/types.hpp"
 #include "struo/detail/internal_concepts.hpp"
-#include "struo/transforms/transforms.hpp"
+#include "struo/detail/transforms.hpp"
 
 namespace struo::detail {
 

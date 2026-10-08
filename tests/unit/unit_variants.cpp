@@ -138,7 +138,7 @@ namespace {
 
 template<typename T = Config>
 auto load_config(std::string_view yaml) {
-    return struo::load<T>(struo::YamlParser{YAML::Load(std::string{yaml})});
+    return struo::load<T>(struo::Yaml{YAML::Load(std::string{yaml})});
 }
 
 template<typename T = Config>

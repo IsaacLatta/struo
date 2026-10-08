@@ -11,9 +11,9 @@
 #include <utility>
 
 #include "struo/Result.hpp"
-#include "struo/parsing/JsonParser.hpp"
-#include "struo/parsing/TomlParser.hpp"
-#include "struo/parsing/YamlParser.hpp"
+#include "struo/detail/parsers/JsonParser.hpp"
+#include "struo/detail/parsers/TomlParser.hpp"
+#include "struo/detail/parsers/YamlParser.hpp"
 
 namespace struo::detail {
 
@@ -66,7 +66,7 @@ template<typename Format>
 struct FormatReader;
 
 template<>
-struct FormatReader<Yaml> {
+struct FormatReader<YamlParser> {
     using Document = YAML::Node;
 
     [[nodiscard]] static Result<Document> parse(std::string_view contents) {
@@ -77,13 +77,13 @@ struct FormatReader<Yaml> {
         }
     }
 
-    [[nodiscard]] static Yaml makeParser(Document& document) {
-        return Yaml{document};
+    [[nodiscard]] static YamlParser makeParser(Document& document) {
+        return YamlParser{document};
     }
 };
 
 template<>
-struct FormatReader<Json> {
+struct FormatReader<JsonParser> {
     using Document = nlohmann::json;
 
     [[nodiscard]] static Result<Document> parse(std::string_view contents) {
@@ -94,13 +94,13 @@ struct FormatReader<Json> {
         }
     }
 
-    [[nodiscard]] static Json makeParser(Document& document) {
-        return Json{std::move(document)};
+    [[nodiscard]] static JsonParser makeParser(Document& document) {
+        return JsonParser{std::move(document)};
     }
 };
 
 template<>
-struct FormatReader<Toml> {
+struct FormatReader<TomlParser> {
     using Document = toml::table;
 
     [[nodiscard]] static Result<Document> parse(std::string_view contents) {
@@ -111,8 +111,8 @@ struct FormatReader<Toml> {
         }
     }
 
-    [[nodiscard]] static Toml makeParser(Document& document) {
-        return Toml{document};
+    [[nodiscard]] static TomlParser makeParser(Document& document) {
+        return TomlParser{document};
     }
 };
 

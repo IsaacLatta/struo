@@ -12,36 +12,15 @@
 #include <utility>
 #include <variant>
 
-#include "struo/detail/asserts.hpp"
 #include "struo/detail/internal_concepts.hpp"
 
-namespace struo {
+namespace struo::detail {
 
 template<auto... Inners>
 struct IfPresentT {};
 
 template<auto... Inners>
-inline constexpr IfPresentT<Inners...> IfPresent{};
-
-template<auto... Inners>
 struct ForEachT {};
-
-template<auto... Inners>
-inline constexpr ForEachT<Inners...> ForEach{};
-
-template <size_t N>
-struct Str {
-    char string[N];
-
-    constexpr Str(const char (&str)[N]) {
-        for (size_t i { 0 }; i < N; ++i)
-            string[i] = str[i];
-    }
-};
-
-}
-
-namespace struo::detail {
 
 struct ConstraintOperation {};
 struct TransformOperation {};
@@ -76,13 +55,6 @@ struct IsOptionalImpl : std::false_type {};
 
 template<typename T>
 struct IsOptionalImpl<std::optional<T>> : std::true_type {};
-
-template<auto V>
-struct ValueT {
-    [[nodiscard]] constexpr auto operator()() const noexcept {
-        return V;
-    }
-};
 
 template<typename T, typename Tag>
 struct TaggedAlias {

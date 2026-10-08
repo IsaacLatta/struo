@@ -18,8 +18,6 @@
 #include "struo/detail/traits.hpp"
 #include "struo/forward.hpp"
 
-#include "struo/parsing/YamlParser.hpp"
-
 #include "struo/detail/detail.hpp"
 
 namespace struo::detail {

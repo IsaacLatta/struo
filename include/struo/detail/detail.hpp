@@ -15,7 +15,6 @@
 #include "struo/Result.hpp"
 #include "struo/detail/traits.hpp"
 
-
 namespace struo::detail {
 
     template<typename... T>

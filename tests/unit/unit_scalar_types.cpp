@@ -14,7 +14,7 @@ namespace {
 
 struct YamlScalarInput {
     static auto parse(std::string_view text) {
-        return struo::YamlParser{YAML::Load(std::string{text})};
+        return struo::Yaml{YAML::Load(std::string{text})};
     }
     static constexpr bool supports_null = true;
     static auto document(std::string_view text, std::string_view) { return parse(text); }
@@ -22,7 +22,7 @@ struct YamlScalarInput {
 
 struct JsonScalarInput {
     static auto parse(std::string_view text) {
-        return struo::JsonParser{nlohmann::json::parse(text)};
+        return struo::Json{nlohmann::json::parse(text)};
     }
     static constexpr bool supports_null = true;
     static auto document(std::string_view text, std::string_view) { return parse(text); }
@@ -33,12 +33,12 @@ struct TomlScalarInput {
 
     auto parse(std::string_view text) {
         source = toml::parse("value = " + std::string{text});
-        return struo::TomlParser{*source.get("value")};
+        return struo::Toml{*source.get("value")};
     }
     static constexpr bool supports_null = false;
     auto document(std::string_view, std::string_view text) {
         source = toml::parse(text);
-        return struo::TomlParser{source};
+        return struo::Toml{source};
     }
 };
 

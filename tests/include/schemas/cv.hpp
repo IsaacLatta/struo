@@ -1,7 +1,7 @@
 #pragma once
 
 #include "schemas/constraints.hpp"
-#include "struo/constraints/platform.hpp"
+#include "struo/constraints.hpp"
 #include <chrono>
 #include <cstdint>
 #include <filesystem>

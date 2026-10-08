@@ -16,7 +16,7 @@
 #include "struo/concepts.hpp"
 #include "struo/detail/detail.hpp"
 
-namespace struo {
+namespace struo::detail {
 
     class TomlParser {
     public:
@@ -115,6 +115,4 @@ namespace struo {
         std::string_view key_{};
     };
 
-    using Toml = TomlParser;
-
-}
+} // namespace struo::detail

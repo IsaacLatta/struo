@@ -1,7 +1,6 @@
-#include "struo/transforms/transforms.hpp"
+#include "struo/transforms.hpp"
 #include "struo/Field.hpp"
-#include "struo/constraints/combinators.hpp"
-#include "struo/constraints/value.hpp"
+#include "struo/constraints.hpp"
 
 #include <gtest/gtest.h>
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <format>
 #include <string_view>
+#include <utility>
 #include <optional>
 #include <functional>
 #include <filesystem>
@@ -14,7 +16,7 @@
 
 #include "struo/detail/detail.hpp"
 
-namespace struo {
+namespace struo::detail {
 
     class YamlParser {
     public:
@@ -104,6 +106,4 @@ namespace struo {
 
     };
 
-    using Yaml = YamlParser;
-
-}
+} // namespace struo::detail

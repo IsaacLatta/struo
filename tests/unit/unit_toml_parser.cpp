@@ -6,19 +6,19 @@
 #include <string>
 #include <string_view>
 
-#include "struo/parsing/TomlParser.hpp"
+#include "struo/parsing.hpp"
 
 namespace {
 
 using namespace struo;
 
-TomlParser scalar(toml::table& source, std::string_view text) {
+Toml scalar(toml::table& source, std::string_view text) {
     source = toml::parse("value = " + std::string{text});
-    return TomlParser{*source.get("value")};
+    return Toml{*source.get("value")};
 }
 
 template<typename T>
-std::optional<T> child_value(const TomlParser& parser, std::string_view key) {
+std::optional<T> child_value(const Toml& parser, std::string_view key) {
     auto child = parser.toChild(key);
     EXPECT_TRUE(child);
     if(!child) return std::nullopt;
@@ -38,7 +38,7 @@ TEST(TomlParser, TraversesScalarsAndLiteralKeys) {
         ratio = 1.25
         "literal.key" = 7
     )");
-    const TomlParser parser{source};
+    const Toml parser{source};
     EXPECT_EQ(child_value<std::string>(parser, "name"), "struo");
     EXPECT_EQ(child_value<int>(parser, "port"), 8080);
     EXPECT_EQ(child_value<bool>(parser, "enabled"), true);
@@ -60,7 +60,7 @@ TEST(TomlParser, TraversesArraysOfTablesAndNestedTables) {
         [databases.backup]
         port = 5433
     )");
-    const TomlParser parser{source};
+    const Toml parser{source};
     auto servers = parser.toChild("servers");
     ASSERT_TRUE(servers);
     ASSERT_TRUE(servers.value());
@@ -112,7 +112,7 @@ TEST(TomlParser, BorrowsNodesAndKeysFromTheLiveDocument) {
         "" = 1
     )");
     // Child views may outlive the parser wrapper, but the document stays alive.
-    auto child = TomlParser{source}.toChild("nested");
+    auto child = Toml{source}.toChild("nested");
     ASSERT_TRUE(child);
     ASSERT_TRUE(child.value());
     auto copied = *child.value();
@@ -126,7 +126,7 @@ TEST(TomlParser, BorrowsNodesAndKeysFromTheLiveDocument) {
     ASSERT_TRUE(text);
     EXPECT_EQ(text.value().data(), source["nested"]["answer"].value<std::string_view>()->data());
 
-    auto members = TomlParser{source}.getMembers();
+    auto members = Toml{source}.getMembers();
     ASSERT_TRUE(members);
     ASSERT_EQ(members.value().size(), 3u);
     auto key = std::move(members.value()[0].first);
@@ -138,7 +138,7 @@ TEST(TomlParser, BorrowsNodesAndKeysFromTheLiveDocument) {
     EXPECT_EQ(key.getMembers().error().code(), WRONG_TYPE);
     EXPECT_EQ(key.getElements().error().code(), WRONG_TYPE);
 
-    auto items = TomlParser{source}.toChild("items");
+    auto items = Toml{source}.toChild("items");
     ASSERT_TRUE(items);
     ASSERT_TRUE(items.value());
     auto elements = items.value()->getElements();
@@ -146,7 +146,7 @@ TEST(TomlParser, BorrowsNodesAndKeysFromTheLiveDocument) {
     ASSERT_EQ(elements.value().size(), 1u);
     EXPECT_EQ(child_value<int>(elements.value()[0], "answer"), 7);
     const toml::value<std::string> standalone_value{"borrowed"};
-    const TomlParser standalone{standalone_value};
+    const Toml standalone{standalone_value};
     EXPECT_EQ(standalone.getAs<std::string>().value(), "borrowed");
 }
 
@@ -156,7 +156,7 @@ TEST(TomlParser, AcceptsEmptyContainers) {
     ASSERT_TRUE(elements);
     EXPECT_TRUE(elements.value().empty());
     const toml::table empty;
-    const auto members = TomlParser{empty}.getMembers();
+    const auto members = Toml{empty}.getMembers();
     ASSERT_TRUE(members);
     EXPECT_TRUE(members.value().empty());
 }

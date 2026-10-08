@@ -82,7 +82,7 @@ using namespace struo;
 
 void expect_error_at(std::string_view yaml, std::string_view path,
                      ErrorCode code = INVALID_VALUE) {
-    const auto result = load<Tree>(YamlParser{YAML::Load(std::string{yaml})});
+    const auto result = load<Tree>(Yaml{YAML::Load(std::string{yaml})});
     ASSERT_FALSE(result);
     // EXPECT_EQ(result.error().code(), code);
     EXPECT_TRUE(result.error().what().starts_with(std::string{path} + ": "))
@@ -132,13 +132,13 @@ TEST(Traversal, TracksContainerAndChildLookupFailures) {
 }
 
 TEST(Traversal, DoesNotRetainEarlierFieldPathsOrRepeatContext) {
-    const auto result = load<Tree>(YamlParser{YAML::Load(
+    const auto result = load<Tree>(Yaml{YAML::Load(
         "object: {foo: 1}\narray: [{foo: 1}, {foo: -1}]")});
     ASSERT_FALSE(result);
 }
 
 TEST(Traversal, MaterializesValidNestedValues) {
-    const auto result = load<Tree>(YamlParser{YAML::Load(
+    const auto result = load<Tree>(Yaml{YAML::Load(
         "object: {foo: 1}\narray: [{foo: 2}]\nmap: {main: {foo: 3}}\n"
         "numeric_map: {-11: {foo: 4}}\nnested: [{main: [{foo: 5}]}]")});
     ASSERT_TRUE(result);

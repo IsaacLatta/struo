@@ -5,14 +5,14 @@
 #include <string>
 #include <string_view>
 
-#include "struo/parsing/JsonParser.hpp"
+#include "struo/parsing.hpp"
 
 namespace {
 
 using namespace struo;
 using nlohmann::json;
 
-std::optional<JsonParser> get_child(const JsonParser& parser, std::string_view key) {
+std::optional<Json> get_child(const Json& parser, std::string_view key) {
     auto result = parser.toChild(key);
     EXPECT_TRUE(result);
     if(!result) {
@@ -23,7 +23,7 @@ std::optional<JsonParser> get_child(const JsonParser& parser, std::string_view k
 }
 
 template<typename T>
-std::optional<T> get_value(const JsonParser& parser) {
+std::optional<T> get_value(const Json& parser) {
     auto result = parser.getAs<T>();
     EXPECT_TRUE(result);
     if(!result) {
@@ -33,13 +33,13 @@ std::optional<T> get_value(const JsonParser& parser) {
 }
 
 template<typename T>
-std::optional<T> get_child_value(const JsonParser& parser, std::string_view key) {
+std::optional<T> get_child_value(const Json& parser, std::string_view key) {
     auto child = get_child(parser, key);
     return child ? get_value<T>(*child) : std::nullopt;
 }
 
 TEST(JsonParser, TraversesScalars) {
-    const JsonParser parser{json::parse(R"({
+    const Json parser{json::parse(R"({
         "name": "struo", "port": 8080, "enabled": true, "ratio": 1.25
     })")};
     EXPECT_EQ(get_child_value<std::string>(parser, "name"), "struo");
@@ -49,7 +49,7 @@ TEST(JsonParser, TraversesScalars) {
 }
 
 TEST(JsonParser, TraversesSequenceOfObjects) {
-    const JsonParser parser{json::parse(R"({"servers": [
+    const Json parser{json::parse(R"({"servers": [
         {"name": "first", "port": 1000},
         {"name": "second", "port": 2000}
     ]})")};
@@ -65,7 +65,7 @@ TEST(JsonParser, TraversesSequenceOfObjects) {
 }
 
 TEST(JsonParser, TraversesMapOfObjects) {
-    const JsonParser parser{json::parse(R"({"databases": {
+    const Json parser{json::parse(R"({"databases": {
         "primary": {"host": "primary.local", "port": 5432},
         "backup": {"host": "backup.local", "port": 5433}
     }})")};
@@ -87,7 +87,7 @@ TEST(JsonParser, TraversesMapOfObjects) {
 }
 
 TEST(JsonParser, MissingChildReturnsEmptyOptional) {
-    const JsonParser parser{json::parse(R"({"name": "struo"})")};
+    const Json parser{json::parse(R"({"name": "struo"})")};
     const auto result = parser.toChild("missing");
     ASSERT_TRUE(result);
     EXPECT_FALSE(result.value());
@@ -97,7 +97,7 @@ TEST(JsonParser, MissingChildReturnsEmptyOptional) {
 }
 
 TEST(JsonParser, NullChildIsPresentButNotScalar) {
-    const JsonParser parser{json::parse(R"({"value": null})")};
+    const Json parser{json::parse(R"({"value": null})")};
     auto child = get_child(parser, "value");
     ASSERT_TRUE(child);
     const auto result = child->getAs<int>();
@@ -106,7 +106,7 @@ TEST(JsonParser, NullChildIsPresentButNotScalar) {
 }
 
 TEST(JsonParser, InvalidScalarConversionReturnsInvalidValue) {
-    const JsonParser parser{json("not-an-integer")};
+    const Json parser{json("not-an-integer")};
     const auto result = parser.getAs<int>();
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code(), INVALID_VALUE);
@@ -114,7 +114,7 @@ TEST(JsonParser, InvalidScalarConversionReturnsInvalidValue) {
 
 TEST(JsonParser, RejectsNonContainersDuringTraversal) {
     for(const auto& value : {json("hello"), json(42), json(true), json(nullptr)}) {
-        const JsonParser parser{value};
+        const Json parser{value};
         const auto elements = parser.getElements();
         ASSERT_FALSE(elements);
         EXPECT_EQ(elements.error().code(), WRONG_TYPE);
@@ -128,8 +128,8 @@ TEST(JsonParser, RejectsNonContainersDuringTraversal) {
 }
 
 TEST(JsonParser, DistinguishesObjectsArraysAndScalars) {
-    const JsonParser array{json::parse("[1, 2, 3]")};
-    const JsonParser object{json::parse(R"({"foo": "bar"})")};
+    const Json array{json::parse("[1, 2, 3]")};
+    const Json object{json::parse(R"({"foo": "bar"})")};
     EXPECT_EQ(array.getAs<int>().error().code(), WRONG_TYPE);
     EXPECT_EQ(object.getAs<std::string>().error().code(), WRONG_TYPE);
     EXPECT_EQ(array.getMembers().error().code(), WRONG_TYPE);
@@ -138,19 +138,19 @@ TEST(JsonParser, DistinguishesObjectsArraysAndScalars) {
 }
 
 TEST(JsonParser, AcceptsEmptyContainers) {
-    const auto elements = JsonParser{json::array()}.getElements();
+    const auto elements = Json{json::array()}.getElements();
     ASSERT_TRUE(elements);
     EXPECT_TRUE(elements.value().empty());
-    const auto members = JsonParser{json::object()}.getMembers();
+    const auto members = Json{json::object()}.getMembers();
     ASSERT_TRUE(members);
     EXPECT_TRUE(members.value().empty());
 }
 
 TEST(JsonParser, ChildrenOwnTheirValues) {
-    auto child = get_child(JsonParser{json::parse(R"({"value": "retained"})")}, "value");
+    auto child = get_child(Json{json::parse(R"({"value": "retained"})")}, "value");
     ASSERT_TRUE(child);
     EXPECT_EQ(get_value<std::string>(*child), "retained");
-    auto members = JsonParser{json::parse(R"({"key": "value"})")}.getMembers();
+    auto members = Json{json::parse(R"({"key": "value"})")}.getMembers();
     ASSERT_TRUE(members);
     ASSERT_EQ(members.value().size(), 1u);
     EXPECT_EQ(get_value<std::string>(members.value()[0].first), "key");

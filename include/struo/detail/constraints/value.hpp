@@ -7,9 +7,10 @@
 #include <type_traits>
 
 #include "struo/concepts.hpp"
+#include "struo/types.hpp"
 #include "struo/Result.hpp"
 
-namespace struo {
+namespace struo::detail {
 
     template<typename T>
     concept HasFormatter = std::is_default_constructible_v<std::formatter<std::remove_cvref_t<T>, char>>;
@@ -143,19 +144,4 @@ namespace struo {
             return ok();
         }
     };
-
-    template<auto... Values>
-    inline constexpr auto OneOf { OneOfConstraint<Values...>{} };
-
-    inline constexpr auto Positive { PositiveConstraint{} };
-
-    inline constexpr auto NotEmpty { NotEmptyConstraint{} };
-
-    template<Str Prefix>
-    inline constexpr StartsWithConstraint<Prefix> StartsWith{};
-
-    template<Str Postfix>
-    inline constexpr EndsWithConstraint<Postfix> EndsWith{};
-
-    inline constexpr IsFiniteConstraint IsFinite{};
 }

@@ -1,4 +1,4 @@
-#include "struo/constraints/value.hpp"
+#include "struo/constraints.hpp"
 
 #include <gtest/gtest.h>
 

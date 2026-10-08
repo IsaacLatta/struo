@@ -9,7 +9,7 @@
 
 #include "struo/Result.hpp"
 
-namespace struo {
+namespace struo::detail {
 
     template<auto Min, auto Max>
     requires (std::same_as<decltype(Min), decltype(Max)> && (Min <= Max))
@@ -57,26 +57,5 @@ namespace struo {
             return err(ARGUMENT_OUT_OF_RANGE, std::format("\"{}\" constraint failed: expected {}, got size {}", name(), description(), size));
         }
     };
-
-    template<auto Min, auto Max>
-    inline constexpr auto Range { RangeConstraint<Min, Max>{} };
-
-    template<auto Min>
-    inline constexpr auto AtLeast { RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
-
-    template<auto Max>
-    inline constexpr auto AtMost { RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
-
-    template<size_t Min, size_t Max>
-    inline constexpr auto SizeRange { SizeRangeConstraint<Min, Max>{} };
-
-    template<size_t Min>
-    inline constexpr auto SizeAtLeast { SizeRangeConstraint<Min, std::numeric_limits<size_t>::max()>{} };
-
-    template<size_t Max>
-    inline constexpr auto SizeAtMost { SizeRangeConstraint<std::numeric_limits<size_t>::min(), Max>{} };
-
-    template<size_t N>
-    inline constexpr auto SizeExactly { SizeRangeConstraint<N, N>{} };
 
 }

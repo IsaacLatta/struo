@@ -11,7 +11,7 @@
 
 #include "struo/detail/detail.hpp"
 
-namespace struo {
+namespace struo::detail {
 
     template<auto... Constraints>
     struct OrConstraint {
@@ -150,17 +150,4 @@ namespace struo {
             return ok();
         }
     };
-
-    template<auto... Constraints>
-    inline constexpr auto Or { OrConstraint<Constraints...>{} };
-
-    template<auto... Constraints>
-    inline constexpr auto And { AndConstraint<Constraints...>{} };
-
-    template<auto Constraint>
-    inline constexpr auto Not { NotConstraint<Constraint>{} };
-
-    template<auto... Constraints>
-    inline constexpr auto ExactlyOne { ExactlyOneConstraint<Constraints...>{} };
-
-}
+} // struo::detail

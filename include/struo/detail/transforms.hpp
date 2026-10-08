@@ -2,21 +2,19 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstring>
-#include <ios>
-#include <functional>
+#include <cstddef>
+#include <filesystem>
 #include <format>
-#include <utility>
+#include <functional>
 #include <optional>
 #include <string>
-#include <filesystem>
+#include <utility>
 
 #include "struo/Result.hpp"
 #include "struo/concepts.hpp"
+#include "struo/types.hpp"
 
-#include "struo/detail/types.hpp"
-
-namespace struo {
+namespace struo::detail {
 
 template<char Char>
 struct TrimT {
@@ -107,27 +105,6 @@ struct AddPrefixT {
     }
 };
 
-template<char Char>
-inline constexpr TrimT<Char> Trim{};
-
-inline constexpr auto TrimWhitespace { Trim<' '> };
-
-template<Str Prefix>
-inline constexpr AddPrefixT<Prefix> AddPrefix{};
-
-inline constexpr auto AddLeadingSlash { AddPrefix<Str{"/"}> };
-
-inline constexpr ToUpperT ToUpper{};
-
-inline constexpr ToLowerT ToLower{};
-
-template<Str ParentDir>
-inline constexpr RelativeToT<ParentDir> RelativeTo{};
-
-}
-
-namespace struo::detail {
-
 template<auto... Inners>
 struct IfPresentTransformT {
     template<typename T>
@@ -183,4 +160,4 @@ struct ForEachTransformT {
     }
 };
 
-}
+} // namespace struo::detail

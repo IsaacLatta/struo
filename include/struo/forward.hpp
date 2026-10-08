@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 
-#include "struo/detail/types.hpp"
+#include "struo/types.hpp"
 
 namespace struo {
 
@@ -19,13 +19,6 @@ namespace struo {
     template<typename T>
     requires (!std::is_reference_v<T> && !std::same_as<std::remove_cvref_t<T>, Error>)
     class Result;
-
-    template<auto... Constraints>
-    struct ForEachConstraint;
-
-    class YamlParser;
-    class JsonParser;
-    class TomlParser;
 
     struct DefaultSchema {};
 
@@ -45,3 +38,14 @@ namespace struo {
     template<typename... Callables>
     using Transforms = detail::TaggedArgPack<struct TagTransforms, Callables...>;
 }
+
+namespace struo::detail {
+
+class YamlParser;
+class JsonParser;
+class TomlParser;
+
+template<auto... Constraints>
+struct ForEachConstraint;
+
+} // namespace struo::detail
