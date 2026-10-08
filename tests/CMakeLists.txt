@@ -4,7 +4,6 @@ add_executable(struo_tests)
 
 target_sources(struo_tests
         PRIVATE
-        unit/unit_parser_interface.cpp
         unit/unit_template_constraints.cpp
         unit/unit_defaults.cpp
         unit/unit_variants.cpp

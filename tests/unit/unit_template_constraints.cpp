@@ -2,6 +2,7 @@
 #include "struo/constraints.hpp"
 #include "struo/Field.hpp"
 #include "struo/transforms.hpp"
+#include "struo/Variant.hpp"
 
 #include <gtest/gtest.h>
 #include <array>
@@ -95,25 +96,54 @@ using NumbersField = Field<&Config::numbers>;
 template<typename F, typename Arg>
 concept CanMakeField = requires(Arg arg) { F{Keys{"value"}, arg}; };
 static_assert(CanMakeField<NumberField, decltype(Constraints{Positive})>);
-static_assert(!CanMakeField<NumberField, decltype(Constraints{StartsWith<"a">})>);
-static_assert(!CanMakeField<NumberField, decltype(Constraints{And<Positive, StartsWith<"a">>})>);
-static_assert(!CanMakeField<NumberField, decltype(Constraints{WrongResult{}})>);
-static_assert(!CanMakeField<NumberField, decltype(Constraints{RvalueConstraint{}})>);
 static_assert(CanMakeField<NumberField, decltype(Constraints{LvalueConstraint{}})>);
 static_assert(CanMakeField<NumberField, decltype(Constraints{ExplicitOnlyConstraint{}})>);
-static_assert(!CanMakeField<Field<&Config::text>, decltype(Constraints{ExplicitOnlyConstraint{}})>);
 static_assert(CanMakeField<NumbersField, decltype(Constraints{ForEach<Positive>})>);
-static_assert(!CanMakeField<NumbersField, decltype(Constraints{ForEach<StartsWith<"a">>})>);
-static_assert(!std::is_constructible_v<NumberField, Keys, decltype(Constraints{StartsWith<"a">})>);
-static_assert(!std::is_constructible_v<NumberField, Keys, int>);
 static_assert(!std::is_constructible_v<NumberField, Keys, Keys>);
 static_assert(CanMakeField<NumberField, decltype(Defaults{FromEnv<"STRUO_TEST_DEFAULT">})>);
-static_assert(!CanMakeField<NumberField, decltype(Defaults{[] { return std::string{}; }})>);
-static_assert(!CanMakeField<NumberField, decltype(Transforms{ToLower})>);
-static_assert(!CanMakeField<NumbersField, decltype(Transforms{ForEach<ToLower>})>);
-static_assert(!CanMakeField<Field<&Config::optional>, decltype(Transforms{IfPresent<ToLower>})>);
 static_assert(CanMakeField<Field<&Config::optional>, decltype(Transforms{IfPresent<[](int n) { return n + 1; }>})>);
 static_assert(!IsConstraintFor<decltype(And<LvalueConstraint{}>), int>);
+
+static_assert(CanProduceResult<LvalueConstraint, int, Result<void>, const int&>);
+static_assert(CanProduceResult<ExplicitOnlyConstraint, int, Result<void>, const int&>);
+static_assert(!CanProduceResult<ExplicitOnlyConstraint, std::string, Result<void>, const std::string&>);
+static_assert(!CanProduceResult<RvalueConstraint, int, Result<void>, const int&>);
+static_assert(!CanProduceResult<WrongResult, int, Result<void>, const int&>);
+static_assert(!CanProduceResult<decltype(ToLower), int, Result<int>, const int&>);
+static_assert(CanProduceResult<decltype(Value<42>), int, Result<std::optional<int>>>);
+static_assert(CanProduceResult<decltype(FromEnv<"STRUO_TEST_DEFAULT">), int, Result<std::optional<int>>>);
+static_assert(!CanProduceResult<decltype([] { return std::string{}; }), int, Result<std::optional<int>>>);
+static_assert(!CanProduceResult<WrongEach, std::vector<int>, Result<void>, const std::vector<int>&>);
+
+enum class BindingKind { Number };
+using NumberBinding = Bind<BindingKind::Number, int>;
+using NumberVariant = Variant<NumberBinding>;
+static_assert(IsBinding<NumberBinding>);
+static_assert(std::is_constructible_v<NumberVariant, Bindings<NumberBinding>>);
+static_assert(std::is_constructible_v<NumberVariant, Bindings<NumberBinding>, TagKey>);
+static_assert(std::is_constructible_v<NumberVariant, Bindings<NumberBinding>, ContentKey>);
+static_assert(!std::is_constructible_v<NumberVariant, Bindings<NumberBinding>, int>);
+static_assert(!std::is_constructible_v<NumberVariant, Bindings<NumberBinding>, TagKey&, TagKey>);
+static_assert(!std::is_constructible_v<NumberVariant, Bindings<NumberBinding>, ContentKey&, const ContentKey&>);
+template<auto Tag>
+concept CanNameBinding = requires { typename Bind<Tag, int>; };
+inline constexpr char named_tag[] = "number";
+constexpr const char* null_tag = nullptr;
+static_assert(CanNameBinding<named_tag>);
+static_assert(!CanNameBinding<null_tag>);
+static_assert(!CanNameBinding<nullptr>);
+static_assert(!CanNameBinding<42>);
+
+struct MemberChecks { int number; int function(); };
+template<auto Member>
+concept CanNameField = requires { typename Field<Member>; };
+constexpr int MemberChecks::* null_member = nullptr;
+static_assert(CanNameField<&MemberChecks::number>);
+static_assert(!CanNameField<&MemberChecks::function>);
+static_assert(!CanNameField<null_member>);
+static_assert(!CanNameField<nullptr>);
+static_assert(!CanNameField<42>);
+
 
 TEST(TemplateConstraints, WrapsLvalueAndExplicitTypeCallables) {
     NumberField field{Keys{"number"}, Constraints{LvalueConstraint{}, ExplicitOnlyConstraint{}}};

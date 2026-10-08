@@ -58,17 +58,40 @@ concept IsVariant = detail::IsVariantImpl<std::remove_cvref_t<T>>::value;
 template<typename Callable, typename Signature>
 concept HasFunctionSignature = detail::HasFunctionSignatureImpl<Callable, Signature>::value;
 
+// Match the wrapper's result conversion and explicit value-type fallback.
+template<typename Callable, typename Value, typename Return, typename... Args>
+concept CanProduceResult = [] {
+    if constexpr (std::invocable<Callable&, Args...>) {
+        return requires(Callable& callable, Args... args) {
+            Return{std::invoke(callable, std::forward<Args>(args)...)};
+        };
+    } else {
+        return requires(Callable& callable, Args... args) {
+            Return{callable.template operator()<Value>(std::forward<Args>(args)...)};
+        };
+    }
+}();
+
 template<typename T>
 concept IsChronoDuration = detail::IsChronoDurationImpl<std::remove_cvref_t<T>>::value;
 
 template<typename T>
 struct SchemaTraits;
 
+template<typename T>
+concept IsPointerLike = std::is_pointer_v<T> || std::is_null_pointer_v<T>;
+
 template<typename Subject, typename... Types>
 concept IsOneOf = (0 + (std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>> + ...) == 1);
 
 template<typename Subject, typename... Args>
 concept AppearsExactlyOnce = ((size_t{0} + ... + size_t{std::same_as<Subject, Args>}) == 1);
+
+template<typename Subject, typename... Args>
+concept AppearsAtMostOnce = ((size_t{0} + ... + size_t{std::same_as<Subject, Args>}) <= 1);
+
+template<typename... Args>
+concept AllAppearAtMostOnce = (AppearsAtMostOnce<std::remove_cvref_t<Args>, std::remove_cvref_t<Args>...> && ...);
 
 template<typename T>
 concept IsScalar = std::is_arithmetic_v<std::remove_cvref_t<T>> ||

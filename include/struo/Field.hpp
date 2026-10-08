@@ -27,7 +27,7 @@ namespace struo {
 
     public:
         template<typename... Args>
-        requires IsOneOf<Keys, Args...>
+        requires IsOneOf<Keys, Args...> && AllAppearAtMostOnce<Args...>
         constexpr explicit Field(Args&&... args) {
             (this->apply(std::forward<Args>(args)), ...);
         }
@@ -105,20 +105,21 @@ namespace struo {
         }
 
         template<typename... Callables>
-        requires (HasFunctionSignature<Callables, DefaultResult()> && ...)
+        requires (CanProduceResult<Callables, value_type, DefaultResult> && ...)
         constexpr void apply(Defaults<Callables...> defaults) {
             detail::apply_and_wrap_arg_func_pack<value_type, DefaultResult>(std::move(defaults), defaults_);
         }
 
         template<typename... Callables>
-        requires (HasFunctionSignature<Callables, Result<void>(const value_type&)> && ...)
+        requires (CanProduceResult<typename detail::KeywordTraits<detail::ConstraintOperation, Callables>::callable_type,
+            value_type, Result<void>, const value_type&> && ...)
         constexpr void apply(Constraints<Callables...> constraints) {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<void>, detail::ConstraintOperation>(std::move(constraints), constraints_);
         }
 
         template<typename... Callables>
-        requires ((HasFunctionSignature<Callables, Result<value_type>(const value_type&)> ||
-                    HasFunctionSignature<Callables, value_type(const value_type&)>) && ...)
+        requires (CanProduceResult<typename detail::KeywordTraits<detail::TransformOperation, Callables>::callable_type,
+            value_type, Result<value_type>, const value_type&> && ...)
         constexpr void apply(Transforms<Callables...> transforms) {
             detail::apply_and_wrap_arg_func_pack<value_type, Result<value_type>, detail::TransformOperation>(std::move(transforms), transforms_);
         }
