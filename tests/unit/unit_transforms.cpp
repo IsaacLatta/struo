@@ -30,15 +30,6 @@ TEST(Transforms, TrimHandlesBoundariesAndPreservesInteriorCharacters) {
     EXPECT_EQ(Trim<'\0'>(std::string{"\0word\0", 6}), "word");
 }
 
-TEST(Transforms, TrimWhitespaceTrimsSpacesAndPreservesOtherCharacters) {
-    EXPECT_EQ(TrimWhitespace(std::string{"   word word   "}), "word word");
-    EXPECT_EQ(TrimWhitespace(std::string{"   "}), "");
-    EXPECT_EQ(TrimWhitespace(std::string{}), "");
-    // The current alias is Trim<' '>, so tabs and newlines are preserved.
-    EXPECT_EQ(TrimWhitespace(std::string{" \tword\n "}), "\tword\n");
-    EXPECT_EQ(TrimWhitespace(fs::path{"  dir/file  "}), fs::path{"dir/file"});
-}
-
 TEST(Transforms, CaseTransformsSupportStringsAndPaths) {
     EXPECT_EQ(ToLower(std::string{"MiXeD Az09_-/ ."}), "mixed az09_-/ .");
     EXPECT_EQ(ToUpper(std::string{"MiXeD Az09_-/ ."}), "MIXED AZ09_-/ .");
@@ -50,6 +41,45 @@ TEST(Transforms, CaseTransformsSupportStringsAndPaths) {
     EXPECT_EQ(ToUpper(fs::path{}), fs::path{});
     EXPECT_EQ(ToLower(std::string{"A\0Z", 3}), (std::string{"a\0z", 3}));
     EXPECT_EQ(ToUpper(std::string{"a\0z", 3}), (std::string{"A\0Z", 3}));
+}
+
+TEST(Transforms, TrimWhitespaceHandlesAllStandardWhitespace) {
+    const std::string whitespace{" \t\n\r\f\v"};
+
+    struct Case {
+        std::string input;
+        std::string expected;
+    };
+
+    const std::vector<Case> cases{
+        {"", ""},
+        {"word", "word"},
+        {whitespace, ""},
+        {whitespace + "word", "word"},
+        {"word" + whitespace, "word"},
+        {whitespace + "word" + whitespace, "word"},
+        {"\n \tword \r\n", "word"},
+        {whitespace + "first" + whitespace + "second" + whitespace,
+        "first" + whitespace + "second"},
+        {whitespace + std::string{"a\0b", 3} + whitespace,
+        std::string{"a\0b", 3}}
+    };
+
+    for (const auto& [input, expected] : cases) {
+        SCOPED_TRACE(::testing::PrintToString(input));
+        EXPECT_EQ(TrimWhitespace(input), expected);
+    }
+
+    for (char ch : whitespace) {
+        SCOPED_TRACE(static_cast<int>(ch));
+        const std::string input = std::string(2, ch) + "dir/file" + ch;
+        EXPECT_EQ(TrimWhitespace(input), "dir/file");
+        EXPECT_EQ(TrimWhitespace(fs::path{input}), fs::path{"dir/file"});
+    }
+
+    EXPECT_EQ(TrimWhitespace(fs::path{whitespace + "dir/file" + whitespace}), fs::path{"dir/file"});
+    EXPECT_EQ(TrimWhitespace(fs::path{whitespace}), fs::path{});
+    EXPECT_EQ(TrimWhitespace(fs::path{}), fs::path{});
 }
 
 TEST(Transforms, CaseTransformsPreserveHighBytesInCLocale) {

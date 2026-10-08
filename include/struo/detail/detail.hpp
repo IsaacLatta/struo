@@ -121,4 +121,25 @@ namespace struo::detail {
         }
     }
 
+    template<typename Predicate>
+    requires std::predicate<Predicate, char>
+    [[nodiscard]] constexpr std::string_view trim(const std::string_view& str, Predicate&& predicate) {
+        const auto first = std::ranges::find_if_not(str, predicate);
+        const auto last = std::ranges::find_if_not(str | std::views::reverse, predicate).base();
+        return first == str.end() ? std::string_view{} : str.substr(first - str.begin(), last - first);
+    }
+
+    template<typename Predicate>
+    requires std::predicate<Predicate, char>
+    [[nodiscard]] std::filesystem::path trim(const std::filesystem::path& path, Predicate&& predicate) {
+        return std::filesystem::path{trim(path.string(), std::forward<Predicate>(predicate))};
+    }
+
+    template<typename T, typename Predicate>
+    requires std::predicate<Predicate, char> &&
+             std::constructible_from<std::string_view, const T&> &&
+             std::constructible_from<T, std::string_view>
+    [[nodiscard]] constexpr T trim(const T& in, Predicate&& predicate) {
+        return T{trim(std::string_view{in}, std::forward<Predicate>(predicate))};
+    }
 }

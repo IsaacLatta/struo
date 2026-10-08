@@ -12,7 +12,7 @@ inline constexpr detail::IfPresentT<Inners...> IfPresent{};
 template<auto... Inners>
 inline constexpr detail::ForEachT<Inners...> ForEach{};
 
-template <std::size_t N>
+template <size_t N>
 struct Str {
     char string[N];
 

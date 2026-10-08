@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <concepts>
 #include <cstddef>
 #include <filesystem>
 #include <format>
@@ -14,28 +15,30 @@
 #include "struo/Result.hpp"
 #include "struo/concepts.hpp"
 #include "struo/types.hpp"
+#include "struo/detail/internal_concepts.hpp"
 
 namespace struo::detail {
 
-template<char Char>
+template<char... Char>
 struct TrimT {
-    [[nodiscard]] std::string operator()(const std::string& str) const {
-        return doTrim(str);
-    }
-
-    [[nodiscard]] std::filesystem::path operator()(const std::filesystem::path& path) const {
-        return std::filesystem::path{doTrim(path.string())};
+    template<typename T>
+    [[nodiscard]] constexpr T operator()(const T& in) const {
+        constexpr auto predicate = [](char ch) { return ((ch == Char) || ...); };
+        if constexpr (std::same_as<T, std::filesystem::path>) {
+            return std::filesystem::path{trim(in.string(), predicate)};
+        } else {
+            static_assert(std::constructible_from<T, std::string_view>, "TrimT requires T to be constructable from std::string_view");
+            static_assert(std::constructible_from<std::string_view, const T&>, "TrimT requires std::string_view to be requires from T");
+            return T{trim(std::string_view{in}, predicate)};
+        }
     }
 
 private:
-    [[nodiscard]] static std::string doTrim(const std::string& str) {
-        const size_t first = str.find_first_not_of(Char);
-        if(first == std::string::npos) {
-            return {};
-        }
-        const size_t last = str.find_last_not_of(Char);
-        const size_t length = last - first + 1;
-        return str.substr(first, length);
+    template<typename Predicate>
+    [[nodiscard]] constexpr static std::string_view trim(std::string_view str, Predicate&& predicate) {
+        const auto first = std::ranges::find_if_not(str, predicate);
+        const auto last = std::ranges::find_if_not(str | std::views::reverse, predicate).base();
+        return first == str.end() ? std::string_view{} : str.substr(first - str.begin(), last - first);
     }
 };
 
