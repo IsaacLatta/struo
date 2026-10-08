@@ -1,40 +1,16 @@
 #pragma once
 
-#include <optional>
-#include <string_view>
-#include <vector>
-#include <functional>
+#include <concepts>
+#include <type_traits>
 
 #include "struo/types.hpp"
 
 namespace struo {
-
-    enum class Presence {
-        REQUIRED,
-        OPTIONAL
-    }; using enum Presence;
-
     class Error;
 
     template<typename T>
     requires (!std::is_reference_v<T> && !std::same_as<std::remove_cvref_t<T>, Error>)
     class Result;
-
-    struct DefaultSchema {};
-
-    template<typename T, typename Schema = DefaultSchema>
-    struct Traits;
-
-    using Keys = detail::TaggedAlias<std::vector<std::string_view>, struct TagKeys>;
-
-    template<typename... Callables>
-    using Defaults = detail::TaggedArgPack<struct TagDefaults, Callables...>;
-
-    template<typename... Callables>
-    using Constraints = detail::TaggedArgPack<struct TagConstraints, Callables...>;
-
-    template<typename... Callables>
-    using Transforms = detail::TaggedArgPack<struct TagTransforms, Callables...>;
 }
 
 namespace struo::detail {

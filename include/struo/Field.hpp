@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iterator>
 
+#include "struo/types.hpp"
 #include "struo/concepts.hpp"
 #include "struo/forward.hpp"
 #include "struo/defaults.hpp"
