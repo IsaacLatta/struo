@@ -19,11 +19,11 @@
 
 namespace struo::detail {
 
-template<char... Char>
+template<char... Chars>
 struct TrimT {
     template<typename T>
     [[nodiscard]] constexpr T operator()(const T& in) const {
-        constexpr auto predicate = [](char ch) { return ((ch == Char) || ...); };
+        constexpr auto predicate = [](char ch) { return ((ch == Chars) || ...); };
         if constexpr (std::same_as<T, std::filesystem::path>) {
             return std::filesystem::path{trim(in.string(), predicate)};
         } else {

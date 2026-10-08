@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <initializer_list>
+#include <optional>
+#include <source_location>
 #include <string_view>
+#include <utility>
 #include <vector>
 
+#include "struo/Field.hpp"
 #include "struo/struo.hpp"
 
 namespace {
@@ -139,6 +143,120 @@ TEST(CombinatorConstraintTest, ForEachRequiresAllConstraintsToMatch) {
 
 TEST(CombinatorConstraintTest, ForEachSupportsNestedCombinators) {
     EXPECT_TRUE((detail::adapter_of<detail::ConstraintOperation, ForEach<Or<IsEven, IsOdd>>>()(std::vector<int>{1, 2, 3, 4})));
+}
+
+TEST(IfPresentConstraintTest, AbsentValueSkipsAllConstraints) {
+    static int calls;
+    calls = 0;
+    constexpr auto fail = [](int) -> Result<void> {
+        ++calls;
+        return err(INVALID_VALUE, "must not be invoked");
+    };
+    struct Config { std::optional<int> value; };
+    Field<&Config::value> field{Keys{"value"}, Constraints{IfPresent<fail, fail>}};
+
+    EXPECT_TRUE(field.getConstraints().front()(std::nullopt));
+    EXPECT_EQ(calls, 0);
+}
+
+TEST(IfPresentConstraintTest, PresentValueInvokesAllConstraintsInOrder) {
+    static std::vector<std::pair<int, int>> calls;
+    calls.clear();
+    constexpr auto first = [](int value) -> Result<void> {
+        calls.emplace_back(1, value);
+        return ok();
+    };
+    constexpr auto second = [](int value) -> Result<void> {
+        calls.emplace_back(2, value);
+        return ok();
+    };
+    constexpr auto third = [](int value) -> Result<void> {
+        calls.emplace_back(3, value);
+        return ok();
+    };
+    struct Config { std::optional<int> value; };
+    Field<&Config::value> field{
+        Keys{"value"}, Constraints{IfPresent<first, second, third>}
+    };
+
+    EXPECT_TRUE(field.getConstraints().front()(std::optional<int>{42}));
+    const std::vector<std::pair<int, int>> expected{{1, 42}, {2, 42}, {3, 42}};
+    EXPECT_EQ(calls, expected);
+}
+
+TEST(IfPresentConstraintTest, StopsAtFirstFailureAndPreservesError) {
+    static std::vector<int> calls;
+    static const Error expected{INVALID_VALUE, "second constraint failed", std::source_location::current()};
+    constexpr auto first = [](int) -> Result<void> {
+        calls.push_back(1);
+        return ok();
+    };
+    constexpr auto second = [](int) -> Result<void> {
+        calls.push_back(2);
+        return expected;
+    };
+    constexpr auto third = [](int) -> Result<void> {
+        calls.push_back(3);
+        return err(WRONG_TYPE, "third constraint failed");
+    };
+
+    // Also check that a failure in the first position skips every later check.
+    const auto check = [&]<auto... Checks>() {
+        calls.clear();
+        struct Config { std::optional<int> value; };
+        Field<&Config::value> field{Keys{"value"}, Constraints{IfPresent<Checks...>}};
+        const auto result = field.getConstraints().front()(std::optional<int>{42});
+
+        ASSERT_FALSE(result);
+        EXPECT_EQ(result.error().code(), expected.code());
+        EXPECT_EQ(result.error().what(), expected.what());
+        EXPECT_EQ(result.error().where().file_name(), std::string_view{expected.where().file_name()});
+        EXPECT_EQ(result.error().where().function_name(), std::string_view{expected.where().function_name()});
+        EXPECT_EQ(result.error().where().line(), expected.where().line());
+        EXPECT_EQ(result.error().where().column(), expected.where().column());
+    };
+
+    check.template operator()<first, second, third>();
+    EXPECT_EQ(calls, (std::vector<int>{1, 2}));
+    check.template operator()<second, third>();
+    EXPECT_EQ(calls, (std::vector<int>{2}));
+}
+
+TEST(IfPresentConstraintTest, EmptyConstraintPackSucceeds) {
+    const detail::IfPresentConstraintT<> constraint;
+    EXPECT_TRUE(constraint(std::optional<int>{}));
+    EXPECT_TRUE(constraint(std::optional<int>{42}));
+}
+
+TEST(IfPresentConstraintTest, SupportsNestedDescriptorsThroughField) {
+    struct Config {
+        std::optional<std::vector<int>> list;
+        std::vector<std::optional<int>> elements;
+        std::optional<std::optional<int>> nested;
+    };
+    Field<&Config::list> list{
+        Keys{"list"}, Constraints{IfPresent<ForEach<IsEven>>}
+    };
+    const auto& checkList = list.getConstraints().front();
+    EXPECT_TRUE(checkList(std::nullopt));
+    EXPECT_TRUE(checkList(std::vector<int>{2, 4}));
+    EXPECT_FALSE(checkList(std::vector<int>{2, 3}));
+
+    Field<&Config::elements> elements{
+        Keys{"elements"}, Constraints{ForEach<IfPresent<IsEven>>}
+    };
+    const auto& checkElements = elements.getConstraints().front();
+    EXPECT_TRUE(checkElements({std::nullopt, 2}));
+    EXPECT_FALSE(checkElements({std::nullopt, 3}));
+
+    Field<&Config::nested> nested{
+        Keys{"nested"}, Constraints{IfPresent<IfPresent<IsEven>>}
+    };
+    const auto& checkNested = nested.getConstraints().front();
+    EXPECT_TRUE(checkNested(std::nullopt));
+    EXPECT_TRUE(checkNested(std::optional<std::optional<int>>{std::in_place, std::nullopt}));
+    EXPECT_TRUE(checkNested(std::optional<std::optional<int>>{std::in_place, 2}));
+    EXPECT_FALSE(checkNested(std::optional<std::optional<int>>{std::in_place, 3}));
 }
 
 } // namespace

@@ -48,4 +48,7 @@ class TomlParser;
 template<auto... Constraints>
 struct ForEachConstraint;
 
+template<auto... Constraints>
+struct IfPresentConstraintT;
+
 } // namespace struo::detail

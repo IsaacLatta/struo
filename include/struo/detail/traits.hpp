@@ -44,6 +44,14 @@ struct KeywordTraits<TransformOperation, IfPresentT<Inners...>> {
 };
 
 template<auto... Inners>
+struct KeywordTraits<ConstraintOperation, IfPresentT<Inners...>> {
+    using callable_type = IfPresentConstraintT<adapter_of<ConstraintOperation, Inners>()...>;
+    static constexpr callable_type adapt(IfPresentT<Inners...>) {
+        return {};
+    }
+};
+
+template<auto... Inners>
 struct KeywordTraits<ConstraintOperation, ForEachT<Inners...>> {
     using callable_type = ForEachConstraint<adapter_of<ConstraintOperation, Inners>()...>;
     static constexpr callable_type adapt(ForEachT<Inners...>) {
