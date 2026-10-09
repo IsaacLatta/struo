@@ -15,7 +15,8 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "STRUO_BUILD_TESTS": "ON",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
       }
     },
     {
@@ -47,9 +48,25 @@
       }
     },
     {
+      "name": "clang",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "condition": {
+        "type": "inList",
+        "string": "${hostSystemName}",
+        "list": ["Linux", "Darwin"]
+      }
+    },
+    {
       "name": "dev",
       "inherits": ["debug", "gcc"],
       "displayName": "Developer Build (GCC)"
+    },
+    {
+      "name": "clang-debug",
+      "inherits": ["debug", "clang"]
     },
     {
       "name": "gcc-debug",
@@ -70,6 +87,10 @@
       "configurePreset": "gcc-debug"
     },
     {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
+    },
+    {
       "name": "gcc-release",
       "configurePreset": "gcc-release"
     }
@@ -85,6 +106,13 @@
     {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-debug",
+      "configurePreset": "clang-debug",
       "output": {
         "outputOnFailure": true
       }
