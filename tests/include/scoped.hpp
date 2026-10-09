@@ -91,7 +91,7 @@ namespace struo::testlib {
         }
 
         ~ScopedEnvVariable() noexcept {
-            ::struo::detail::unset_env_variable(key_, value_);
+            ::struo::detail::unset_env_variable(key_);
         }
 
     private:

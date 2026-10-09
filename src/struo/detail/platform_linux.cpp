@@ -46,7 +46,7 @@ namespace struo::detail {
         (void)::setenv(key.c_str(), value.c_str(), replace_if_present);
     }
 
-    void unset_env_variable(const std::string& key, const std::string& value) noexcept {
+    void unset_env_variable(const std::string& key) noexcept {
         (void)::unsetenv(key.c_str());
     }
 }

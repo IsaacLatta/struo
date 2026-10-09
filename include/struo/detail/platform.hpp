@@ -16,7 +16,7 @@ namespace struo::detail {
 
     void set_env_variable(const std::string& key, const std::string& value) noexcept;
 
-    void unset_env_variable(const std::string& key, const std::string& value) noexcept;
+    void unset_env_variable(const std::string& key) noexcept;
 
 #endif // STRUO_PLATFORM_LINUX
 

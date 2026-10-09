@@ -21,14 +21,42 @@ target_compile_definitions(struo_defs
         STRUO_PLATFORM_LINUX=$<PLATFORM_ID:Linux>
 )
 
+# The following warnings are from: https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    target_compile_options(struo_warnings INTERFACE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wshadow
+        -Wnon-virtual-dtor
+        -Wold-style-cast
+        -Wcast-align
+        -Woverloaded-virtual
+        -Wconversion
+        -Wsign-conversion
+        -Wdouble-promotion
+        -Wformat=2
+        -Wimplicit-fallthrough
+    )
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(struo_warnings INTERFACE
+        -Wduplicated-cond
+        -Wduplicated-branches
+        -Wlogical-op
+        -Wnull-dereference
+        -Wuseless-cast
+        -Wsuggest-override
+    )
+endif()
+
 target_sources(struo
         PRIVATE
         src/struo/detail/detail.cpp)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-target_sources(struo
-        PRIVATE
-        src/struo/detail/platform_linux.cpp)
+    target_sources(struo PRIVATE src/struo/detail/platform_linux.cpp)
 endif()
 
 target_include_directories(struo
@@ -44,7 +72,7 @@ target_link_libraries(struo
         magic_enum::magic_enum
         nlohmann_json::nlohmann_json
         tomlplusplus::tomlplusplus
-        
+
         PUBLIC
         struo_defs
 
