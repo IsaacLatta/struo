@@ -101,13 +101,13 @@ TEST(Transforms, AddPrefixIsIdempotentAndPreservesEmptyInputs) {
     EXPECT_EQ(prefix(std::string{"pre-"}), "pre-");
     EXPECT_EQ(prefix(std::string{"pre"}), "pre-pre");
     EXPECT_EQ(prefix(std::string{"PRE-value"}), "pre-PRE-value");
-    EXPECT_EQ(prefix(std::string{}), "");
+    EXPECT_EQ(prefix(std::string{}), "pre-");
     EXPECT_EQ(prefix(prefix(std::string{"value"})), "pre-value");
     EXPECT_EQ(AddPrefix<Str{""}>(std::string{"value"}), "value");
     EXPECT_EQ(prefix(std::string{"x\0y", 3}), (std::string{"pre-x\0y", 7}));
     EXPECT_EQ(AddLeadingSlash(std::string{"dir/file"}), "/dir/file");
     EXPECT_EQ(AddLeadingSlash(std::string{"/dir/file"}), "/dir/file");
-    EXPECT_EQ(AddLeadingSlash(std::string{}), "");
+    EXPECT_EQ(AddLeadingSlash(std::string{}), "/");
 }
 
 TEST(Transforms, RelativeToJoinsPathsWithoutFilesystemAccessOrNormalization) {

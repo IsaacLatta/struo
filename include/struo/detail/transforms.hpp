@@ -28,7 +28,7 @@ struct TrimT {
             return std::filesystem::path{trim(in.string(), predicate)};
         } else {
             static_assert(std::constructible_from<T, std::string_view>, "TrimT requires T to be constructable from std::string_view");
-            static_assert(std::constructible_from<std::string_view, const T&>, "TrimT requires std::string_view to be requires from T");
+            static_assert(std::constructible_from<std::string_view, const T&>, "TrimT requires std::string_view to be constructable from T");
             return T{trim(std::string_view{in}, predicate)};
         }
     }
@@ -95,10 +95,6 @@ private:
 template<Str Prefix>
 struct AddPrefixT {
     [[nodiscard]] constexpr std::string operator()(const std::string& string) const {
-        if(string.empty()) {
-            return string;
-        }
-
         if(string.starts_with(Prefix.string)) {
             return string;
         }

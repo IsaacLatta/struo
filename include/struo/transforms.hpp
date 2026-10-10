@@ -30,9 +30,9 @@ inline constexpr detail::TrimT<Chars...> Trim{};
 inline constexpr auto TrimWhitespace = Trim<' ', '\t', '\n', '\r', '\f', '\v'>;
 
 /**
- * @brief Adds Prefix to a nonempty string unless it already starts with Prefix.
+ * @brief Prepends Prefix to a string unless it already starts with Prefix.
  *
- * The prefix comparison is case-sensitive. Empty strings remain empty.
+ * The prefix comparison is case-sensitive. Empty strings become Prefix.
  *
  * @code{.cpp}
  * Field<&Config::name>{Keys{"name"}, Transforms{AddPrefix<"app-">}}
