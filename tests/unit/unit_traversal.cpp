@@ -44,7 +44,7 @@ template<>
 struct SchemaTraits<Item> {
     static auto schema() {
         return Object{
-            Field<&Item::foo>{Keys{"foo", "f"}, REQUIRED, Constraints{Positive}}
+            Field<&Item::foo>{Keys{"foo", "f"}, Constraints{Positive}}
         };
     }
 };
@@ -64,12 +64,12 @@ template<>
 struct SchemaTraits<Tree> {
     static auto schema() {
         return Object{
-            Field<&Tree::object>{Keys{"object", "my.object"}},
-            Field<&Tree::array>{Keys{"array"}},
-            Field<&Tree::map>{Keys{"map"}},
-            Field<&Tree::numeric_map>{Keys{"numeric_map"}},
-            Field<&Tree::nested>{Keys{"nested"}},
-            Field<&Tree::defaults>{Keys{"defaults"}}
+            Field<&Tree::object>{Keys{"object", "my.object"}, OPTIONAL},
+            Field<&Tree::array>{Keys{"array"}, OPTIONAL},
+            Field<&Tree::map>{Keys{"map"}, OPTIONAL},
+            Field<&Tree::numeric_map>{Keys{"numeric_map"}, OPTIONAL},
+            Field<&Tree::nested>{Keys{"nested"}, OPTIONAL},
+            Field<&Tree::defaults>{Keys{"defaults"}, OPTIONAL}
         };
     }
 };

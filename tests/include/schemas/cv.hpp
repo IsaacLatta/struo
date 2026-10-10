@@ -172,8 +172,8 @@ template<>
 struct SchemaTraits<cv::Point> {
     static auto schema() {
         return Object{
-            Field<&cv::Point::x>{Keys{"x"}, REQUIRED},
-            Field<&cv::Point::y>{Keys{"y"}, REQUIRED}
+            Field<&cv::Point::x>{Keys{"x"}},
+            Field<&cv::Point::y>{Keys{"y"}}
         };
     }
 };
@@ -182,8 +182,8 @@ template<>
 struct SchemaTraits<cv::Resolution> {
     static auto schema() {
         return Object{
-            Field<&cv::Resolution::height>{Keys{"height"}, REQUIRED, Constraints{Positive}},
-            Field<&cv::Resolution::width>{Keys{"width"}, REQUIRED, Constraints{Positive}}
+            Field<&cv::Resolution::height>{Keys{"height"}, Constraints{Positive}},
+            Field<&cv::Resolution::width>{Keys{"width"}, Constraints{Positive}}
         };
     }
 };
@@ -192,8 +192,8 @@ template<>
 struct SchemaTraits<cv::Region> {
     static auto schema() {
         return Object{
-            Field<&cv::Region::origin>{Keys{"origin"}, REQUIRED},
-            Field<&cv::Region::dimensions>{Keys{"dimensions"}, REQUIRED}
+            Field<&cv::Region::origin>{Keys{"origin"}},
+            Field<&cv::Region::dimensions>{Keys{"dimensions"}}
         };
     }
 };
@@ -202,7 +202,7 @@ template<>
 struct SchemaTraits<cv::VideoCamera> {
     static auto schema() {
         return Object{
-            Field<&cv::VideoCamera::path>{Keys{"path", "file", "video"}, REQUIRED,
+            Field<&cv::VideoCamera::path>{Keys{"path", "file", "video"},
                 Constraints{NotEmpty, FileExists}}
         };
     }
@@ -212,8 +212,8 @@ template<>
 struct SchemaTraits<cv::UsbCamera> {
     static auto schema() {
         return Object{
-            Field<&cv::UsbCamera::device_id>{Keys{"device_id"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::UsbCamera::preset_name>{Keys{"preset_name"}, REQUIRED, Constraints{NotEmpty}}
+            Field<&cv::UsbCamera::device_id>{Keys{"device_id"}, Constraints{NotEmpty}},
+            Field<&cv::UsbCamera::preset_name>{Keys{"preset_name"}, Constraints{NotEmpty}}
         };
     }
 };
@@ -222,12 +222,12 @@ template<>
 struct SchemaTraits<cv::IpCamera> {
     static auto schema() {
         return Object{
-            Field<&cv::IpCamera::ip>{Keys{"ip", "addr", "address"}, REQUIRED,
+            Field<&cv::IpCamera::ip>{Keys{"ip", "addr", "address"},
                 Constraints{Or<IsValidIpv4, IsValidHostname>}},
             Field<&cv::IpCamera::endpoint>{Keys{"endpoint"}, Defaults{[] { return std::string{"/"}; }}},
-            Field<&cv::IpCamera::password>{Keys{"password"}},
-            Field<&cv::IpCamera::username>{Keys{"username"}},
-            Field<&cv::IpCamera::port>{Keys{"port"}, REQUIRED, Constraints{Range<1, 65535>}}
+            Field<&cv::IpCamera::password>{Keys{"password"}, OPTIONAL},
+            Field<&cv::IpCamera::username>{Keys{"username"}, OPTIONAL},
+            Field<&cv::IpCamera::port>{Keys{"port"}, Constraints{Range<1, 65535>}}
         };
     }
 };
@@ -236,11 +236,11 @@ template<>
 struct SchemaTraits<cv::GigeCamera> {
     static auto schema() {
         return Object{
-            Field<&cv::GigeCamera::device_id>{Keys{"device_id"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::GigeCamera::preset_name>{Keys{"preset_name"}},
+            Field<&cv::GigeCamera::device_id>{Keys{"device_id"}, Constraints{NotEmpty}},
+            Field<&cv::GigeCamera::preset_name>{Keys{"preset_name"}, OPTIONAL},
             Field<&cv::GigeCamera::mbps>{Keys{"mbps"}, Defaults{Value<cv::GigeCamera::DEFAULT_MBPS>}, Constraints{Positive}},
             Field<&cv::GigeCamera::compression>{Keys{"compression"}, Defaults{Value<false>}},
-            Field<&cv::GigeCamera::crop>{Keys{"crop"}}
+            Field<&cv::GigeCamera::crop>{Keys{"crop"}, OPTIONAL}
         };
     }
 };
@@ -261,7 +261,7 @@ template<>
 struct SchemaTraits<cv::ClassificationModel> {
     static auto schema() {
         return Object{
-            Field<&cv::ClassificationModel::class_names>{Keys{"class_names"}, REQUIRED, Constraints{NotEmpty}}
+            Field<&cv::ClassificationModel::class_names>{Keys{"class_names"}, Constraints{NotEmpty}}
         };
     }
 };
@@ -270,8 +270,8 @@ template<>
 struct SchemaTraits<cv::DetectionModel> {
     static auto schema() {
         return Object{
-            Field<&cv::DetectionModel::class_names>{Keys{"class_names"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::DetectionModel::confidence_threshold>{Keys{"confidence_threshold"}, REQUIRED, Constraints{Range<0.0, 1.0>}}
+            Field<&cv::DetectionModel::class_names>{Keys{"class_names"}, Constraints{NotEmpty}},
+            Field<&cv::DetectionModel::confidence_threshold>{Keys{"confidence_threshold"}, Constraints{Range<0.0, 1.0>}}
         };
     }
 };
@@ -280,7 +280,7 @@ template<>
 struct SchemaTraits<cv::SegmentationModel> {
     static auto schema() {
         return Object{
-            Field<&cv::SegmentationModel::class_names>{Keys{"class_names"}, REQUIRED, Constraints{NotEmpty}},
+            Field<&cv::SegmentationModel::class_names>{Keys{"class_names"}, Constraints{NotEmpty}},
             Field<&cv::SegmentationModel::mask_confidence_threshold>{Keys{"mask_confidence_threshold"},
                 Defaults{Value<0.5>}, Constraints{Range<0.0, 1.0>}}
         };
@@ -302,9 +302,9 @@ template<>
 struct SchemaTraits<cv::Color> {
     static auto schema() {
         return Object{
-            Field<&cv::Color::red>{Keys{"red"}, REQUIRED, Constraints{Range<0, 255>}},
-            Field<&cv::Color::green>{Keys{"green"}, REQUIRED, Constraints{Range<0, 255>}},
-            Field<&cv::Color::blue>{Keys{"blue"}, REQUIRED, Constraints{Range<0, 255>}}
+            Field<&cv::Color::red>{Keys{"red"}, Constraints{Range<0, 255>}},
+            Field<&cv::Color::green>{Keys{"green"}, Constraints{Range<0, 255>}},
+            Field<&cv::Color::blue>{Keys{"blue"}, Constraints{Range<0, 255>}}
         };
     }
 };
@@ -313,8 +313,8 @@ template<>
 struct SchemaTraits<cv::Letterbox> {
     static auto schema() {
         return Object{
-            Field<&cv::Letterbox::target>{Keys{"target"}, REQUIRED},
-            Field<&cv::Letterbox::padding>{Keys{"padding"}, REQUIRED}
+            Field<&cv::Letterbox::target>{Keys{"target"}},
+            Field<&cv::Letterbox::padding>{Keys{"padding"}}
         };
     }
 };
@@ -334,7 +334,7 @@ template<>
 struct SchemaTraits<cv::CameraNode> {
     static auto schema() {
         return Object{
-            Field<&cv::CameraNode::camera>{Keys{"camera"}, REQUIRED}
+            Field<&cv::CameraNode::camera>{Keys{"camera"}}
         };
     }
 };
@@ -343,8 +343,8 @@ template<>
 struct SchemaTraits<cv::ModelNode> {
     static auto schema() {
         return Object{
-            Field<&cv::ModelNode::model>{Keys{"model"}, REQUIRED},
-            Field<&cv::ModelNode::image_node_name>{Keys{"image_node_name"}, REQUIRED, Constraints{NotEmpty}}
+            Field<&cv::ModelNode::model>{Keys{"model"}},
+            Field<&cv::ModelNode::image_node_name>{Keys{"image_node_name"}, Constraints{NotEmpty}}
         };
     }
 };
@@ -353,8 +353,8 @@ template<>
 struct SchemaTraits<cv::ImageProcessorNode> {
     static auto schema() {
         return Object{
-            Field<&cv::ImageProcessorNode::image_processors>{Keys{"image_processors"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::ImageProcessorNode::image_node_name>{Keys{"image_node_name"}, REQUIRED, Constraints{NotEmpty}}
+            Field<&cv::ImageProcessorNode::image_processors>{Keys{"image_processors"}, Constraints{NotEmpty}},
+            Field<&cv::ImageProcessorNode::image_node_name>{Keys{"image_node_name"}, Constraints{NotEmpty}}
         };
     }
 };
@@ -374,7 +374,7 @@ template<>
 struct SchemaTraits<cv::PeriodicTrigger> {
     static auto schema() {
         return Object{
-            Field<&cv::PeriodicTrigger::scan_every>{Keys{"scan_every_ms"}, REQUIRED, Constraints{test_schemas::PositiveDuration}}
+            Field<&cv::PeriodicTrigger::scan_every>{Keys{"scan_every_ms"}, Constraints{test_schemas::PositiveDuration}}
         };
     }
 };
@@ -383,9 +383,9 @@ template<>
 struct SchemaTraits<cv::SerialTrigger> {
     static auto schema() {
         return Object{
-            Field<&cv::SerialTrigger::device>{Keys{"device"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::SerialTrigger::baud_rate>{Keys{"baud_rate"}, REQUIRED, Constraints{Positive}},
-            Field<&cv::SerialTrigger::message>{Keys{"message"}, REQUIRED, Constraints{NotEmpty}}
+            Field<&cv::SerialTrigger::device>{Keys{"device"}, Constraints{NotEmpty}},
+            Field<&cv::SerialTrigger::baud_rate>{Keys{"baud_rate"}, Constraints{Positive}},
+            Field<&cv::SerialTrigger::message>{Keys{"message"}, Constraints{NotEmpty}}
         };
     }
 };
@@ -394,7 +394,7 @@ template<>
 struct SchemaTraits<cv::HttpTrigger> {
     static auto schema() {
         return Object{
-            Field<&cv::HttpTrigger::path>{Keys{"path"}, REQUIRED, Constraints{StartsWith<Str{"/"}>}}
+            Field<&cv::HttpTrigger::path>{Keys{"path"}, Constraints{StartsWith<Str{"/"}>}}
         };
     }
 };
@@ -414,9 +414,9 @@ template<>
 struct SchemaTraits<cv::CommandServer> {
     static auto schema() {
         return Object{
-            Field<&cv::CommandServer::ip>{Keys{"ip"}, REQUIRED, Constraints{Or<IsValidIpv4, IsValidHostname>}},
-            Field<&cv::CommandServer::port>{Keys{"port"}, REQUIRED, Constraints{Range<1, 65535>}},
-            Field<&cv::CommandServer::password>{Keys{"password"}}
+            Field<&cv::CommandServer::ip>{Keys{"ip"}, Constraints{Or<IsValidIpv4, IsValidHostname>}},
+            Field<&cv::CommandServer::port>{Keys{"port"}, Constraints{Range<1, 65535>}},
+            Field<&cv::CommandServer::password>{Keys{"password"}, OPTIONAL}
         };
     }
 };
@@ -425,8 +425,8 @@ template<>
 struct SchemaTraits<cv::Pipeline> {
     static auto schema() {
         return Object{
-            Field<&cv::Pipeline::nodes>{Keys{"nodes"}, REQUIRED, Constraints{NotEmpty, cv::NodeReferencesExist{}}},
-            Field<&cv::Pipeline::trigger>{Keys{"trigger"}, REQUIRED}
+            Field<&cv::Pipeline::nodes>{Keys{"nodes"}, Constraints{NotEmpty, cv::NodeReferencesExist{}}},
+            Field<&cv::Pipeline::trigger>{Keys{"trigger"}}
         };
     }
 };
@@ -435,8 +435,8 @@ template<>
 struct SchemaTraits<cv::Config> {
     static auto schema() {
         return Object{
-            Field<&cv::Config::pipelines>{Keys{"pipelines"}, REQUIRED, Constraints{NotEmpty}},
-            Field<&cv::Config::command_server>{Keys{"command_server"}}
+            Field<&cv::Config::pipelines>{Keys{"pipelines"}, Constraints{NotEmpty}},
+            Field<&cv::Config::command_server>{Keys{"command_server"}, OPTIONAL}
         };
     }
 };

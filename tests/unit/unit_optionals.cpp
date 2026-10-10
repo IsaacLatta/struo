@@ -59,7 +59,7 @@ template<>
 struct SchemaTraits<Endpoint> {
     static auto schema() {
         return Object{
-            Field<&Endpoint::host>{Keys{"host"}, REQUIRED},
+            Field<&Endpoint::host>{Keys{"host"}},
             Field<&Endpoint::port>{Keys{"port"}, Defaults{Value<8080>}, Constraints{IsValidPort}}
         };
     }
@@ -68,7 +68,7 @@ struct SchemaTraits<Endpoint> {
 template<typename T>
 struct SchemaTraits<Config<T>> {
     static auto schema() {
-        return Object{Field<&Config<T>::value>{Keys{"value"}}};
+        return Object{Field<&Config<T>::value>{Keys{"value"}, OPTIONAL}};
     }
 };
 
@@ -76,10 +76,10 @@ template<>
 struct SchemaTraits<InitializedConfig> {
     static auto schema() {
         return Object{
-            Field<&InitializedConfig::number>{Keys{"number"}},
-            Field<&InitializedConfig::object>{Keys{"object"}},
-            Field<&InitializedConfig::sequence>{Keys{"sequence"}},
-            Field<&InitializedConfig::map>{Keys{"map"}}
+            Field<&InitializedConfig::number>{Keys{"number"}, OPTIONAL},
+            Field<&InitializedConfig::object>{Keys{"object"}, OPTIONAL},
+            Field<&InitializedConfig::sequence>{Keys{"sequence"}, OPTIONAL},
+            Field<&InitializedConfig::map>{Keys{"map"}, OPTIONAL}
         };
     }
 };
@@ -87,7 +87,7 @@ struct SchemaTraits<InitializedConfig> {
 template<>
 struct SchemaTraits<RequiredConfig> {
     static auto schema() {
-        return Object{Field<&RequiredConfig::value>{Keys{"value"}, REQUIRED}};
+        return Object{Field<&RequiredConfig::value>{Keys{"value"}}};
     }
 };
 
@@ -95,9 +95,9 @@ template<>
 struct SchemaTraits<DefaultConfig> {
     static auto schema() {
         return Object{
-            Field<&DefaultConfig::value>{Keys{"value"}, REQUIRED,
+            Field<&DefaultConfig::value>{Keys{"value"},
                 Defaults{[] { return std::optional<int>{9}; }}},
-            Field<&DefaultConfig::cleared>{Keys{"cleared"}, REQUIRED,
+            Field<&DefaultConfig::cleared>{Keys{"cleared"},
                 Defaults{[] { return std::optional<int>{}; }}}
         };
     }
@@ -106,7 +106,7 @@ struct SchemaTraits<DefaultConfig> {
 template<>
 struct SchemaTraits<ConstrainedConfig> {
     static auto schema() {
-        return Object{Field<&ConstrainedConfig::value>{Keys{"value"}, Constraints{PositiveNumber}}};
+        return Object{Field<&ConstrainedConfig::value>{Keys{"value"}, OPTIONAL, Constraints{PositiveNumber}}};
     }
 };
 

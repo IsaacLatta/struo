@@ -65,12 +65,12 @@ template<>
 struct SchemaTraits<ScalarTypesConfig> {
     static auto schema() {
         return Object{
-            Field<&ScalarTypesConfig::delay>{Keys{"delay"}},
+            Field<&ScalarTypesConfig::delay>{Keys{"delay"}, OPTIONAL},
             Field<&ScalarTypesConfig::timeout>{Keys{"timeout"}, Defaults{[] { return std::chrono::seconds{5}; }}},
-            Field<&ScalarTypesConfig::interval>{Keys{"interval"}},
-            Field<&ScalarTypesConfig::output>{Keys{"output"}},
-            Field<&ScalarTypesConfig::inputs>{Keys{"inputs"}},
-            Field<&ScalarTypesConfig::timers>{Keys{"timers"}}
+            Field<&ScalarTypesConfig::interval>{Keys{"interval"}, OPTIONAL},
+            Field<&ScalarTypesConfig::output>{Keys{"output"}, OPTIONAL},
+            Field<&ScalarTypesConfig::inputs>{Keys{"inputs"}, OPTIONAL},
+            Field<&ScalarTypesConfig::timers>{Keys{"timers"}, OPTIONAL}
         };
     }
 };

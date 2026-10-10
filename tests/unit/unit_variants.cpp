@@ -61,7 +61,7 @@ template<>
 struct SchemaTraits<Endpoint> {
     static auto schema() {
         return Object{
-            Field<&Endpoint::host>{Keys{"host", "h"}, REQUIRED},
+            Field<&Endpoint::host>{Keys{"host", "h"}},
             Field<&Endpoint::port>{Keys{"port"}, Defaults{Value<8080>}, Constraints{IsValidPort}}
         };
     }
@@ -87,9 +87,9 @@ template<>
 struct SchemaTraits<Config> {
     static auto schema() {
         return Object{
-            Field<&Config::choice>{Keys{"choice", "pick"}, Constraints{PositiveNumber}},
-            Field<&Config::choices>{Keys{"choices"}},
-            Field<&Config::named>{Keys{"named"}}
+            Field<&Config::choice>{Keys{"choice", "pick"}, OPTIONAL, Constraints{PositiveNumber}},
+            Field<&Config::choices>{Keys{"choices"}, OPTIONAL},
+            Field<&Config::named>{Keys{"named"}, OPTIONAL}
         };
     }
 };
@@ -97,7 +97,7 @@ struct SchemaTraits<Config> {
 template<>
 struct SchemaTraits<RequiredConfig> {
     static auto schema() {
-        return Object{Field<&RequiredConfig::choice>{Keys{"choice"}, REQUIRED}};
+        return Object{Field<&RequiredConfig::choice>{Keys{"choice"}}};
     }
 };
 
@@ -105,7 +105,7 @@ template<>
 struct SchemaTraits<DefaultConfig> {
     static auto schema() {
         return Object{Field<&DefaultConfig::choice>{
-            Keys{"choice"}, REQUIRED,
+            Keys{"choice"},
             Defaults{[] { return ConfigValue{42}; }},
             Constraints{PositiveNumber}
         }};
@@ -128,7 +128,7 @@ struct SchemaTraits<NestedValue> {
 template<>
 struct SchemaTraits<NestedConfig> {
     static auto schema() {
-        return Object{Field<&NestedConfig::choice>{Keys{"choice"}, REQUIRED}};
+        return Object{Field<&NestedConfig::choice>{Keys{"choice"}}};
     }
 };
 

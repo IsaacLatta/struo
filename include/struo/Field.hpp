@@ -34,7 +34,7 @@ namespace struo {
      * struct struo::SchemaTraits<Config> {
      *     static auto schema() {
      *         return struo::Object{
-     *             struo::Field<&Config::port>{struo::Keys{"port"}, struo::REQUIRED}
+     *             struo::Field<&Config::port>{struo::Keys{"port"}}
      *         };
      *     }
      * };
@@ -57,8 +57,8 @@ namespace struo {
          *
          * Keys are checked in order, the first present key is used. One can pass
          * and empty set of keys to force instantiation from defaults (e.g., for an environment variable).
-         * Fields are OPTIONAL by default. If no key or default supplies a value, an optional
-         * field retains its member initializer, while a REQUIRED field fails loading.
+         * Fields are REQUIRED by default. If no key or default supplies a value, loading fails.
+         * Explicitly OPTIONAL fields retain their member initializer when no value is supplied.
          * A default can satisfy a REQUIRED field.
          *
          * Defaults are tried in order until one supplies a value. an error stops
@@ -166,7 +166,7 @@ namespace struo {
 
     private:
         Keys aliases_{};
-        Presence presence_ { OPTIONAL };
+        Presence presence_ { REQUIRED };
         std::optional<std::string_view> parsed_as_key_{};
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};
