@@ -69,6 +69,10 @@
       "inherits": ["debug", "clang"]
     },
     {
+      "name": "clang-release",
+      "inherits": ["clang", "release"]
+    },
+    {
       "name": "gcc-debug",
       "inherits": ["debug", "gcc"]
     },
@@ -87,12 +91,16 @@
       "configurePreset": "gcc-debug"
     },
     {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
+    },
+    {
       "name": "clang-debug",
       "configurePreset": "clang-debug"
     },
     {
-      "name": "gcc-release",
-      "configurePreset": "gcc-release"
+      "name": "clang-release",
+      "configurePreset": "clang-release"
     }
   ],
   "testPresets": [
@@ -113,6 +121,13 @@
     {
       "name": "clang-debug",
       "configurePreset": "clang-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release",
       "output": {
         "outputOnFailure": true
       }
