@@ -13,22 +13,40 @@
 namespace {
 using namespace struo;
 
-struct WrongSize { std::string size() const; };
-struct MutableSize { size_t size(); };
-struct ConvertibleSize { int size() const; };
-struct WrongEmpty { void empty() const; };
-struct Unformattable {
-    bool operator>(int) const;
+struct WrongSize {
+    std::string size() const {
+        return "one";
+    }
 };
+
+struct MutableSize {
+    size_t size() { return 1; }
+};
+
+struct ConvertibleSize {
+    int size() const { return 1; }
+};
+
+struct WrongEmpty {
+    void empty() const {}
+};
+
+struct Unformattable {
+    bool operator>(int) const { return false; }
+};
+
 struct LvalueConstraint {
     Result<void> operator()(const int&) & { return ok(); }
 };
+
 struct RvalueConstraint {
-    Result<void> operator()(const int&) &&;
+    Result<void> operator()(const int&) && { return ok(); }
 };
+
 struct WrongResult {
-    bool operator()(const int&) const;
+    bool operator()(const int&) const { return true; }
 };
+
 struct ExplicitOnlyConstraint {
     template<typename T>
     requires std::same_as<T, int>
@@ -151,7 +169,7 @@ static_assert(!CanNameBinding<null_tag>);
 static_assert(!CanNameBinding<nullptr>);
 static_assert(!CanNameBinding<42>);
 
-struct MemberChecks { int number; int function(); };
+struct MemberChecks { int number; int function() { return 0; }; };
 template<auto Member>
 concept CanNameField = requires { typename Field<Member>; };
 constexpr int MemberChecks::* null_member = nullptr;

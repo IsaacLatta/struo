@@ -98,8 +98,11 @@ using Keys = detail::TaggedAlias<std::vector<std::string_view>, struct TagKeys>;
  * Field<&Config::port>{Keys{"port"}, Defaults{Value<8080>}}
  * @endcode
  */
-template<typename... Callables>
-using Defaults = detail::TaggedArgPack<struct TagDefaults, Callables...>;
+template<typename... Args>
+struct Defaults {
+    std::tuple<Args...> values;
+    constexpr explicit Defaults(Args... args) : values{std::move(args)...} {}
+};
 
 /**
  * @brief Checks a field's resolved value after its transforms have run.
@@ -111,8 +114,11 @@ using Defaults = detail::TaggedArgPack<struct TagDefaults, Callables...>;
  * Field<&Config::port>{Keys{"port"}, Constraints{Range<1, 65535>}}
  * @endcode
  */
-template<typename... Callables>
-using Constraints = detail::TaggedArgPack<struct TagConstraints, Callables...>;
+template<typename... Args>
+struct Constraints {
+    std::tuple<Args...> values;
+    constexpr explicit Constraints(Args... args) : values{std::move(args)...} {}
+};
 
 /**
  * @brief Transforms a field's resolved value before its constraints are checked.
@@ -126,8 +132,11 @@ using Constraints = detail::TaggedArgPack<struct TagConstraints, Callables...>;
  * Field<&Config::name>{Keys{"name"}, Transforms{TrimWhitespace, ToLower}}
  * @endcode
  */
-template<typename... Callables>
-using Transforms = detail::TaggedArgPack<struct TagTransforms, Callables...>;
+template<typename... Args>
+struct Transforms {
+    std::tuple<Args...> values;
+    constexpr explicit Transforms(Args... args) : values{std::move(args)...} {}
+};
 
 /**
  * @brief Specifies whether a field must resolve to a value.

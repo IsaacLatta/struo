@@ -56,7 +56,7 @@ public:
         Result<void> result { ok() };
 
         std::apply([&](auto&&... fields) {
-            (... && [&]() {
+            (void)(... && [&]() {
                 result = std::invoke(callable, fields);
                 return result.ok();
             }());
@@ -71,7 +71,7 @@ public:
         Result<void> result { ok() };
 
         std::apply([&](auto&&... fields) {
-            (... && [&]() {
+            (void)(... && [&]() {
                 result = std::invoke(callable, fields);
                 return result.ok();
             }());

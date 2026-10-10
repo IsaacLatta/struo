@@ -65,8 +65,12 @@ struct Bind {
  * Variant{Bindings{Bind<Kind::NUMBER, int>{}, Bind<Kind::TEXT, std::string>{}}}
  * @endcode
  */
-template<typename... Bs>
-using Bindings = detail::TaggedArgPack<struct TagBindings, Bs...>;
+template<typename... Args>
+struct Bindings {
+    std::tuple<Args...> values;
+    constexpr explicit Bindings(Args... args) : values{std::move(args)...} {}
+};
+
 
 /** @brief The default variant tag key. */
 inline constexpr TagKey DefaultTagKey { TagKey { "type" } };

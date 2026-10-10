@@ -67,17 +67,25 @@ struct KeywordTraits<TransformOperation, ForEachT<Inners...>> {
     }
 };
 
-template<typename ValueType, typename ReturnType, typename Operation = void, typename Container, typename Tag, typename... Callables>
-constexpr void apply_and_wrap_arg_func_pack(TaggedArgPack<Tag, Callables...> pack, Container& container) {
-    std::apply([&](auto&&... callable){
-        (container.emplace_back([func = KeywordTraits<Operation, std::remove_cvref_t<decltype(callable)>>::adapt(
-            std::forward<decltype(callable)>(callable))](auto&&... args) mutable -> ReturnType {
-            if constexpr (std::invocable<decltype(func)&, decltype(args)...>) {
-                return ReturnType { std::invoke(func, std::forward<decltype(args)>(args)...) };
-            } else {
-                return ReturnType { func.template operator()<ValueType>( std::forward<decltype(args)>(args)...) };
-            }
-        }), ...);
+// TODO(Isaac): Clean this up, move it to seperate wrapper with explicit arg types?
+template<typename ValueType, typename ReturnType, typename Operation = void, typename Container, typename Pack>
+constexpr void apply_and_wrap_arg_func_pack(Pack pack, Container& container) {
+    auto apply_one = [&]<typename Callable>(Callable&& callable) {
+        auto func = KeywordTraits<Operation, std::remove_cvref_t<Callable>>::adapt(std::forward<Callable>(callable));
+
+        container.emplace_back([func = std::move(func)](auto&&... args) mutable -> ReturnType {
+                if constexpr (requires { std::invoke(func, std::forward<decltype(args)>(args)...);}) {
+                    return ReturnType{std::invoke(func, std::forward<decltype(args)>(args)...)};
+                } else if constexpr (requires { func.template operator()<ValueType>(std::forward<decltype(args)>(args)...); }) {
+                    return ReturnType{func.template operator()<ValueType>(std::forward<decltype(args)>(args)...)};
+                } else {
+                    static_assert(false, "Callable does not support either invocation form!");
+                }
+            });
+    };
+
+    std::apply([&](auto&&... callables) {
+        (apply_one(std::forward<decltype(callables)>(callables)), ...);
     }, std::move(pack.values));
 }
 
