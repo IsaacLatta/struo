@@ -70,8 +70,8 @@ struct KeywordTraits<TransformOperation, ForEachT<Inners...>> {
 // TODO(Isaac): Clean this up, move it to seperate wrapper with explicit arg types?
 template<typename ValueType, typename ReturnType, typename Operation = void, typename Container, typename Pack>
 constexpr void apply_and_wrap_arg_func_pack(Pack pack, Container& container) {
-    // Keep explicit template invocation on a typed parameter: MSVC misparses
-    // operator()<ValueType> on an init-capture in nested generic lambdas.
+    // NOTE(Isaac): msvc misparses operator()<ValueType> on an init-capture in nested generic lambdas, 
+    // so this wrapper acts as work around.
     auto invoke_and_wrap = []<typename Func, typename... Args>(Func& func, Args&&... args) -> ReturnType {
         if constexpr (std::invocable<Func&, Args...>) {
             return ReturnType{std::invoke(func, std::forward<Args>(args)...)};

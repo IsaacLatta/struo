@@ -25,7 +25,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2025]
-        preset: [msvc-debug]
+        preset: [msvc-debug, msvc-release]
 
     name: ${{ matrix.os }} / ${{ matrix.preset }}
     runs-on: ${{ matrix.os }}

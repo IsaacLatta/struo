@@ -54,6 +54,20 @@ endif()
 if(MSVC)
     # For __VA_OPT__ in STRUO_ASSERT, ref: https://learn.microsoft.com/en-us/cpp/build/reference/zc-preprocessor?view=msvc-170
     target_compile_options(struo_defs INTERFACE /Zc:preprocessor)
+
+    target_compile_options(struo_warnings INTERFACE
+        /W4
+        /permissive-
+        /w14242
+        /w14254
+        /w14263
+        /w14265
+        /w14287
+        /w14296
+        /w14311
+        /w14826
+        /w14640
+    )
 endif()
 
 target_sources(struo
