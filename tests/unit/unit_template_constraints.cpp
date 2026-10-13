@@ -53,6 +53,12 @@ struct ExplicitOnlyConstraint {
     Result<void> operator()(const auto&) { return ok(); }
 };
 
+static_assert(IsOneOf<const int&, float, int, double>);
+static_assert(IsOneOf<int, const int&>);
+static_assert(!IsOneOf<int, float, double>);
+static_assert(!IsOneOf<int, int, const int&>);
+static_assert(!IsOneOf<int>);
+
 static_assert(HasSizeApi<std::string>);
 static_assert(HasSizeApi<std::vector<int>>);
 static_assert(HasSizeApi<std::array<int, 3>>);
