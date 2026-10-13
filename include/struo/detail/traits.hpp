@@ -70,19 +70,24 @@ struct KeywordTraits<TransformOperation, ForEachT<Inners...>> {
 // TODO(Isaac): Clean this up, move it to seperate wrapper with explicit arg types?
 template<typename ValueType, typename ReturnType, typename Operation = void, typename Container, typename Pack>
 constexpr void apply_and_wrap_arg_func_pack(Pack pack, Container& container) {
+    // Keep explicit template invocation on a typed parameter: MSVC misparses
+    // operator()<ValueType> on an init-capture in nested generic lambdas.
+    auto invoke_and_wrap = []<typename Func, typename... Args>(Func& func, Args&&... args) -> ReturnType {
+        if constexpr (std::invocable<Func&, Args...>) {
+            return ReturnType{std::invoke(func, std::forward<Args>(args)...)};
+        } else if constexpr (CanProduceResult<Func, ValueType, ReturnType, Args...>) {
+            return ReturnType{func.template operator()<ValueType>(std::forward<Args>(args)...)};
+        } else {
+            static_assert(CanProduceResult<Func, ValueType, ReturnType, Args...>,
+                "Callable does not support either invocation form!");
+        }
+    };
+
     auto apply_one = [&]<typename Callable>(Callable&& callable) {
         auto func = KeywordTraits<Operation, std::remove_cvref_t<Callable>>::adapt(std::forward<Callable>(callable));
 
-        container.emplace_back([func = std::move(func)]<typename... Args>(Args&&... args) mutable -> ReturnType {
-            using Func = decltype(func);
-            if constexpr (std::invocable<Func&, Args...>) {
-                return ReturnType{std::invoke(func, std::forward<Args>(args)...)};
-            } else if constexpr (CanProduceResult<Func, ValueType, ReturnType, Args...>) {
-                return ReturnType{func.template operator()<ValueType>(std::forward<Args>(args)...)};
-            } else {
-                static_assert(CanProduceResult<Func, ValueType, ReturnType, Args...>,
-                    "Callable does not support either invocation form!");
-            }
+        container.emplace_back([func = std::move(func), invoke_and_wrap]<typename... Args>(Args&&... args) mutable -> ReturnType {
+            return invoke_and_wrap(func, std::forward<Args>(args)...);
         });
     };
 
