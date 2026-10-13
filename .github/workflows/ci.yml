@@ -20,6 +20,8 @@ permissions:
 jobs:
   windows:
     if: ${{ inputs.target == 'all' || inputs.target == 'windows' }}
+    name: ${{ matrix.os }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
@@ -27,8 +29,8 @@ jobs:
         os: [windows-2025]
         preset: [msvc-debug, msvc-release]
 
-    name: ${{ matrix.os }} / ${{ matrix.preset }}
-    runs-on: ${{ matrix.os }}
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +38,17 @@ jobs:
           submodules: recursive
 
       - uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: actions/cache@v4
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ matrix.os }}-${{ matrix.preset }}-${{ github.sha }}
+          restore-keys: |
+            vcpkg-${{ matrix.os }}-${{ matrix.preset }}-
+
+      - name: Create cache directory
+        shell: bash
+        run: mkdir -p .vcpkg-cache
 
       - uses: lukka/run-vcpkg@v11
         with:
@@ -52,6 +65,8 @@ jobs:
 
   linux:
     if: ${{ inputs.target == 'all' || inputs.target == 'linux' }}
+    name: ${{ matrix.os }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
@@ -59,13 +74,23 @@ jobs:
         os: [ubuntu-24.04, ubuntu-24.04]
         preset: [gcc-debug, gcc-release, clang-debug, clang-release]
 
-    name: ${{ matrix.os }} / ${{ matrix.preset }}
-    runs-on: ${{ matrix.os }}
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache@v4
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ matrix.os }}-${{ matrix.preset }}-${{ github.sha }}
+          restore-keys: |
+            vcpkg-${{ matrix.os }}-${{ matrix.preset }}-
+
+      - name: Create cache directory
+        run: mkdir -p .vcpkg-cache
 
       - uses: lukka/run-vcpkg@v11
         with:
