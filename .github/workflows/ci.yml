@@ -3,6 +3,15 @@ name: ci
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Which platforms to test?
+        type: choice
+        default: all
+        options:
+          - all
+          - linux
+          - windows
 
 permissions:
   contents: read
@@ -10,10 +19,12 @@ permissions:
 
 jobs:
   linux:
+    if: ${{ inputs.target == 'all' || inputs.target == 'linux' }}
+
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, ubuntu-26.04]
+        os: [ubuntu-24.04, ubuntu-24.04]
         preset: [gcc-debug, gcc-release, clang-debug, clang-release]
 
     name: ${{ matrix.os }} / ${{ matrix.preset }}
