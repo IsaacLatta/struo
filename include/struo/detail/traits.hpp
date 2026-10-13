@@ -73,15 +73,17 @@ constexpr void apply_and_wrap_arg_func_pack(Pack pack, Container& container) {
     auto apply_one = [&]<typename Callable>(Callable&& callable) {
         auto func = KeywordTraits<Operation, std::remove_cvref_t<Callable>>::adapt(std::forward<Callable>(callable));
 
-        container.emplace_back([func = std::move(func)](auto&&... args) mutable -> ReturnType {
-                if constexpr (requires { std::invoke(func, std::forward<decltype(args)>(args)...);}) {
-                    return ReturnType{std::invoke(func, std::forward<decltype(args)>(args)...)};
-                } else if constexpr (requires { func.template operator()<ValueType>(std::forward<decltype(args)>(args)...); }) {
-                    return ReturnType{func.template operator()<ValueType>(std::forward<decltype(args)>(args)...)};
-                } else {
-                    static_assert(false, "Callable does not support either invocation form!");
-                }
-            });
+        container.emplace_back([func = std::move(func)]<typename... Args>(Args&&... args) mutable -> ReturnType {
+            using Func = decltype(func);
+            if constexpr (std::invocable<Func&, Args...>) {
+                return ReturnType{std::invoke(func, std::forward<Args>(args)...)};
+            } else if constexpr (CanProduceResult<Func, ValueType, ReturnType, Args...>) {
+                return ReturnType{func.template operator()<ValueType>(std::forward<Args>(args)...)};
+            } else {
+                static_assert(CanProduceResult<Func, ValueType, ReturnType, Args...>,
+                    "Callable does not support either invocation form!");
+            }
+        });
     };
 
     std::apply([&](auto&&... callables) {
