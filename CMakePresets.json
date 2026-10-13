@@ -20,6 +20,22 @@
       }
     },
     {
+      "name": "docker-vcpkg",
+      "hidden": true,
+      "inherits": "base",
+      "toolchainFile": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    },
+    {
+      "name": "docker-gcc-debug",
+      "inherits": ["docker-vcpkg", "gcc", "debug"],
+      "binaryDir": "${sourceDir}/build/docker-gcc-debug"
+    },
+    {
+      "name": "docker-clang-debug",
+      "inherits": ["docker-vcpkg", "clang", "debug"],
+      "binaryDir": "${sourceDir}/build/docker-clang-debug"
+    },
+    {
       "name": "debug",
       "hidden": true,
       "inherits": "base",
@@ -101,6 +117,14 @@
     {
       "name": "clang-release",
       "configurePreset": "clang-release"
+    },
+    {
+      "name": "docker-gcc-debug",
+      "configurePreset": "docker-gcc-debug"
+    },
+    {
+      "name": "docker-clang-debug",
+      "configurePreset": "docker-clang-debug"
     }
   ],
   "testPresets": [
@@ -135,6 +159,20 @@
     {
       "name": "gcc-release",
       "configurePreset": "gcc-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "docker-gcc-debug",
+      "configurePreset": "docker-gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "docker-clang-debug",
+      "configurePreset": "docker-clang-debug",
       "output": {
         "outputOnFailure": true
       }
