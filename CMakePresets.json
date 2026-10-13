@@ -26,14 +26,17 @@
       "toolchainFile": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
     },
     {
-      "name": "docker-gcc-debug",
-      "inherits": ["docker-vcpkg", "gcc", "debug"],
-      "binaryDir": "${sourceDir}/build/docker-gcc-debug"
-    },
-    {
-      "name": "docker-clang-debug",
-      "inherits": ["docker-vcpkg", "clang", "debug"],
-      "binaryDir": "${sourceDir}/build/docker-clang-debug"
+      "name": "msvc-vcpkg",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "cl",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     },
     {
       "name": "debug",
@@ -50,6 +53,24 @@
       "cacheVariables" :{
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "msvc-debug",
+      "inherits": ["debug", "msvc-vcpkg"]
+    },
+    {
+      "name": "msvc-release",
+      "inherits": ["release", "msvc-vcpkg"]
+    },
+    {
+      "name": "docker-gcc-debug",
+      "inherits": ["docker-vcpkg", "gcc", "debug"],
+      "binaryDir": "${sourceDir}/build/docker-gcc-debug"
+    },
+    {
+      "name": "docker-clang-debug",
+      "inherits": ["docker-vcpkg", "clang", "debug"],
+      "binaryDir": "${sourceDir}/build/docker-clang-debug"
     },
     {
       "name": "gcc",
@@ -125,6 +146,14 @@
     {
       "name": "docker-clang-debug",
       "configurePreset": "docker-clang-debug"
+    },
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug"
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release"
     }
   ],
   "testPresets": [
@@ -173,6 +202,20 @@
     {
       "name": "docker-clang-debug",
       "configurePreset": "docker-clang-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "msvc-release",
       "output": {
         "outputOnFailure": true
       }
