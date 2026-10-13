@@ -92,7 +92,7 @@ template<typename T>
 concept IsPointerLike = std::is_pointer_v<T> || std::is_null_pointer_v<T>;
 
 template<typename Subject, typename... Types>
-concept IsOneOf = (0 + (std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>> + ...) == 1);
+concept IsOneOf = ((size_t{0} + ... + size_t{std::same_as<std::remove_cvref_t<Subject>, std::remove_cvref_t<Types>>}) == 1);
 
 template<typename Subject, typename... Args>
 concept AppearsExactlyOnce = ((size_t{0} + ... + size_t{std::same_as<Subject, Args>}) == 1);

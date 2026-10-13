@@ -222,8 +222,11 @@ template<>
 struct SchemaTraits<cv::IpCamera> {
     static auto schema() {
         return Object{
-            Field<&cv::IpCamera::ip>{Keys{"ip", "addr", "address"},
-                Constraints{Or<IsValidIpv4, IsValidHostname>}},
+            Field<&cv::IpCamera::ip>{Keys{"ip", "addr", "address"}, Constraints{NotEmpty}
+#if STRUO_PLATFORM_LINUX
+                , Constraints{Or<IsValidIpv4, IsValidHostname>}
+#endif
+            },
             Field<&cv::IpCamera::endpoint>{Keys{"endpoint"}, Defaults{[] { return std::string{"/"}; }}},
             Field<&cv::IpCamera::password>{Keys{"password"}, OPTIONAL},
             Field<&cv::IpCamera::username>{Keys{"username"}, OPTIONAL},
@@ -414,7 +417,11 @@ template<>
 struct SchemaTraits<cv::CommandServer> {
     static auto schema() {
         return Object{
-            Field<&cv::CommandServer::ip>{Keys{"ip"}, Constraints{Or<IsValidIpv4, IsValidHostname>}},
+            Field<&cv::CommandServer::ip>{Keys{"ip"}, Constraints{NotEmpty}
+#if STRUO_PLATFORM_LINUX
+                , Constraints{Or<IsValidIpv4, IsValidHostname>}
+#endif
+            },
             Field<&cv::CommandServer::port>{Keys{"port"}, Constraints{Range<1, 65535>}},
             Field<&cv::CommandServer::password>{Keys{"password"}, OPTIONAL}
         };
