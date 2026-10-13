@@ -112,7 +112,7 @@ TEST(Transforms, AddPrefixIsIdempotentAndPreservesEmptyInputs) {
 
 TEST(Transforms, RelativeToJoinsPathsWithoutFilesystemAccessOrNormalization) {
     constexpr auto relative = RelativeTo<Str{"/base"}>;
-    EXPECT_EQ(relative(std::string{"dir/file"}), "/base/dir/file");
+    EXPECT_EQ(fs::path{relative(std::string{"dir/file"})}, fs::path{"/base/dir/file"});
     EXPECT_EQ(relative(fs::path{"dir/file"}), fs::path{"/base/dir/file"});
     EXPECT_EQ(relative(std::string{"/absolute/file"}), "/absolute/file");
     EXPECT_EQ(relative(fs::path{"/absolute/file"}), fs::path{"/absolute/file"});

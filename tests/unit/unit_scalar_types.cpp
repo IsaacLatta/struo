@@ -107,7 +107,7 @@ TYPED_TEST(ScalarTypes, ParsesUtf8PathsWithoutFilesystemAccess) {
     TypeParam input;
     const auto result = input.parse(R"("assets/caf\u00e9/data.txt")").template getAs<std::filesystem::path>();
     ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), std::filesystem::path{u8"assets/café/data.txt"});
+    EXPECT_EQ(result.value(), std::filesystem::path{u8"assets/caf\u00e9/data.txt"});
     const auto empty = input.parse(R"("")").template getAs<std::filesystem::path>();
     ASSERT_TRUE(empty);
     EXPECT_TRUE(empty.value().empty());
