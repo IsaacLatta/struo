@@ -51,6 +51,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 endif()
 
+if(MSVC)
+    # For __VA_OPT__ in STRUO_ASSERT, ref: https://learn.microsoft.com/en-us/cpp/build/reference/zc-preprocessor?view=msvc-170
+    target_compile_options(struo_defs INTERFACE /Zc:preprocessor)
+endif()
+
 target_sources(struo
         PRIVATE
         src/struo/detail/detail.cpp)
