@@ -44,7 +44,7 @@ private:
 
 template<Str Path>
 struct RelativeToT {
-    [[nodiscard]] std::string operator()(const std::string string) const {
+    [[nodiscard]] std::string operator()(const std::string& string) const {
         return makeRelative(std::filesystem::path{string}).string();
     }
 
