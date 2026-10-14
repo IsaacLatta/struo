@@ -16,7 +16,10 @@
       "cacheVariables": {
         "STRUO_BUILD_TESTS": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON"
+        "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+        "STRUO_YAML": "ON",
+        "STRUO_TOML": "ON",
+        "STRUO_JSON": "ON"
       }
     },
     {

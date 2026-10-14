@@ -6,6 +6,9 @@
 #include <string>
 
 #include "struo/struo.hpp"
+#include "struo/yaml.hpp"
+#include "struo/json.hpp"
+#include "struo/toml.hpp"
 #include "scoped.hpp"
 
 namespace {

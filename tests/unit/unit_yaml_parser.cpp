@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "struo/parsing.hpp"
+#include "struo/yaml.hpp"
 
 namespace {
 

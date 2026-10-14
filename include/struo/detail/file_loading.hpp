@@ -10,10 +10,8 @@
 #include <system_error>
 #include <utility>
 
+#include "struo/forward.hpp"
 #include "struo/Result.hpp"
-#include "struo/detail/parsers/JsonParser.hpp"
-#include "struo/detail/parsers/TomlParser.hpp"
-#include "struo/detail/parsers/YamlParser.hpp"
 
 namespace struo::detail {
 
@@ -64,57 +62,6 @@ namespace struo::detail {
 
 template<typename Format>
 struct FormatReader;
-
-template<>
-struct FormatReader<YamlParser> {
-    using Document = YAML::Node;
-
-    [[nodiscard]] static Result<Document> parse(std::string_view contents) {
-        try {
-            return YAML::Load(std::string{contents});
-        } catch (const YAML::Exception& error) {
-            return err(PARSE_ERROR, error.what());
-        }
-    }
-
-    [[nodiscard]] static YamlParser makeParser(Document& document) {
-        return YamlParser{document};
-    }
-};
-
-template<>
-struct FormatReader<JsonParser> {
-    using Document = nlohmann::json;
-
-    [[nodiscard]] static Result<Document> parse(std::string_view contents) {
-        try {
-            return nlohmann::json::parse(contents.begin(), contents.end());
-        } catch (const nlohmann::json::exception& error) {
-            return err(PARSE_ERROR, error.what());
-        }
-    }
-
-    [[nodiscard]] static JsonParser makeParser(Document& document) {
-        return JsonParser{std::move(document)};
-    }
-};
-
-template<>
-struct FormatReader<TomlParser> {
-    using Document = toml::table;
-
-    [[nodiscard]] static Result<Document> parse(std::string_view contents) {
-        try {
-            return toml::parse(contents);
-        } catch (const toml::parse_error& error) {
-            return err(PARSE_ERROR, std::string{error.description()});
-        }
-    }
-
-    [[nodiscard]] static TomlParser makeParser(Document& document) {
-        return TomlParser{document};
-    }
-};
 
 template<typename Format>
 concept HasFormatReader = requires(std::string_view contents, typename FormatReader<Format>::Document& document) {

@@ -15,6 +15,7 @@
 #include "struo/Result.hpp"
 #include "struo/concepts.hpp"
 #include "struo/detail/detail.hpp"
+#include "struo/parsing.hpp"
 
 namespace struo::detail {
 
@@ -114,5 +115,22 @@ namespace struo::detail {
         const toml::node* node_{};
         std::string_view key_{};
     };
+
+template<>
+struct FormatReader<TomlParser> {
+    using Document = toml::table;
+
+    [[nodiscard]] static Result<Document> parse(std::string_view contents) {
+        try {
+            return toml::parse(contents);
+        } catch (const toml::parse_error& error) {
+            return err(PARSE_ERROR, std::string{error.description()});
+        }
+    }
+
+    [[nodiscard]] static TomlParser makeParser(Document& document) {
+        return TomlParser{document};
+    }
+};
 
 } // namespace struo::detail

@@ -13,6 +13,7 @@
 #include "struo/Result.hpp"
 #include "struo/concepts.hpp"
 #include "struo/detail/detail.hpp"
+#include "struo/parsing.hpp"
 
 namespace struo::detail {
 
@@ -103,6 +104,23 @@ private:
 
 private:
     nlohmann::json node_;
+};
+
+template<>
+struct FormatReader<JsonParser> {
+    using Document = nlohmann::json;
+
+    [[nodiscard]] static Result<Document> parse(std::string_view contents) {
+        try {
+            return nlohmann::json::parse(contents.begin(), contents.end());
+        } catch (const nlohmann::json::exception& error) {
+            return err(PARSE_ERROR, error.what());
+        }
+    }
+
+    [[nodiscard]] static JsonParser makeParser(Document& document) {
+        return JsonParser{std::move(document)};
+    }
 };
 
 }

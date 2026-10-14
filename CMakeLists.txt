@@ -4,10 +4,10 @@ project(struo VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(magic_enum CONFIG REQUIRED)
-find_package(yaml-cpp CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(tomlplusplus CONFIG REQUIRED)
 
+option(STRUO_YAML "Enable YAML Support" OFF)
+option(STRUO_JSON "Enable JSON Support" OFF)
+option(STRUO_TOML "Enable TOML Support" OFF)
 option(STRUO_BUILD_TESTS "Build struo tests" ${PROJECT_IS_TOP_LEVEL})
 
 add_library(struo_warnings INTERFACE)
@@ -87,17 +87,27 @@ target_include_directories(struo
 
 target_link_libraries(struo
         PUBLIC
-        yaml-cpp::yaml-cpp
         magic_enum::magic_enum
-        nlohmann_json::nlohmann_json
-        tomlplusplus::tomlplusplus
-
-        PUBLIC
         struo_defs
 
         PRIVATE
         struo_warnings
 )
+
+if(STRUO_YAML)
+    find_package(yaml-cpp CONFIG REQUIRED)
+    target_link_libraries(struo PUBLIC yaml-cpp::yaml-cpp)
+endif()
+
+if(STRUO_TOML)
+    find_package(tomlplusplus CONFIG REQUIRED)
+    target_link_libraries(struo PUBLIC tomlplusplus::tomlplusplus)
+endif()
+
+if(STRUO_JSON)
+    find_package(nlohmann_json CONFIG REQUIRED)
+    target_link_libraries(struo PUBLIC nlohmann_json::nlohmann_json)
+endif()
 
 target_compile_features(struo PUBLIC cxx_std_20)
 

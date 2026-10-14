@@ -8,6 +8,9 @@
 
 #include <gtest/gtest.h>
 #include "struo/struo.hpp"
+#include "struo/yaml.hpp"
+#include "struo/json.hpp"
+#include "struo/toml.hpp"
 
 namespace e2e {
 

@@ -9,6 +9,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "struo/struo.hpp"
+#include "struo/yaml.hpp"
 
 namespace {
 

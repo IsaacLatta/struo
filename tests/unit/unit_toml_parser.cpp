@@ -7,6 +7,7 @@
 #include <string_view>
 
 #include "struo/parsing.hpp"
+#include "struo/toml.hpp"
 
 namespace {
 

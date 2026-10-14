@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "struo/struo.hpp"
+#include "struo/yaml.hpp"
 
 namespace {
 

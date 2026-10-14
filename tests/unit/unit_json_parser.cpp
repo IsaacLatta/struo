@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include "struo/parsing.hpp"
+#include "struo/json.hpp"
 
 namespace {
 
