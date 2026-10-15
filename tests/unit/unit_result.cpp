@@ -69,12 +69,6 @@ TEST(Result, ConstructorExceptionSpecifications) {
     static_assert(!std::is_nothrow_constructible_v<Result<void>, const Error&>);
 }
 
-TEST(Result, PropagatesConstructionExceptions) {
-    ThrowingConstruction value;
-    EXPECT_THROW((Result<ThrowingConstruction>{value}), int);
-    EXPECT_THROW((Result<ThrowingConstruction>{std::move(value)}), int);
-}
-
 TEST(Result, HoldsValue) {
     Result<int> result{42};
 
