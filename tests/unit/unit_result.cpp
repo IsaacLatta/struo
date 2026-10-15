@@ -50,6 +50,31 @@ struct MoveOnly {
     int value{};
 };
 
+struct ThrowingConstruction {
+    ThrowingConstruction() = default;
+    ThrowingConstruction(const ThrowingConstruction&) { throw 1; }
+    ThrowingConstruction(ThrowingConstruction&&) { throw 2; }
+};
+
+TEST(Result, ConstructorExceptionSpecifications) {
+    static_assert(std::is_nothrow_constructible_v<Result<int>, int&&>);
+    static_assert(std::is_nothrow_constructible_v<Result<int>, const int&>);
+    static_assert(std::is_nothrow_constructible_v<Result<CopyVerseMove>, CopyVerseMove&&>);
+    static_assert(!std::is_nothrow_constructible_v<Result<CopyVerseMove>, const CopyVerseMove&>);
+    static_assert(!std::is_nothrow_constructible_v<Result<ThrowingConstruction>, ThrowingConstruction&&>);
+    static_assert(!std::is_nothrow_constructible_v<Result<ThrowingConstruction>, const ThrowingConstruction&>);
+    static_assert(std::is_nothrow_constructible_v<Result<int>, Error&&>);
+    static_assert(!std::is_nothrow_constructible_v<Result<int>, const Error&>);
+    static_assert(std::is_nothrow_constructible_v<Result<void>, Error&&>);
+    static_assert(!std::is_nothrow_constructible_v<Result<void>, const Error&>);
+}
+
+TEST(Result, PropagatesConstructionExceptions) {
+    ThrowingConstruction value;
+    EXPECT_THROW((Result<ThrowingConstruction>{value}), int);
+    EXPECT_THROW((Result<ThrowingConstruction>{std::move(value)}), int);
+}
+
 TEST(Result, HoldsValue) {
     Result<int> result{42};
 

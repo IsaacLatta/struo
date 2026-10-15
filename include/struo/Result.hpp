@@ -93,10 +93,10 @@ requires (!std::is_reference_v<T> && !std::same_as<std::remove_cvref_t<T>, Error
 class [[nodiscard]] Result {
 public:
     Result() = delete;
-    constexpr Result(T&& t) noexcept(std::is_nothrow_move_constructible_v<T&&>) : storage_(std::in_place_type<T>, std::move(t)) {}
-    constexpr Result(const T& t) noexcept(std::is_nothrow_constructible_v<const T&>) : storage_(std::in_place_type<T>, t) {}
-    constexpr Result(Error&& error) noexcept(std::is_nothrow_move_constructible_v<Error&&>): storage_(std::in_place_type<Error>, std::move(error)) {}
-    constexpr Result(const Error& error) noexcept(std::is_nothrow_constructible_v<const Error&>) : storage_(std::in_place_type<Error>, error) {}
+    constexpr Result(T&& t) noexcept(std::is_nothrow_move_constructible_v<T>) : storage_(std::in_place_type<T>, std::move(t)) {}
+    constexpr Result(const T& t) noexcept(std::is_nothrow_copy_constructible_v<T>) : storage_(std::in_place_type<T>, t) {}
+    constexpr Result(Error&& error) noexcept(std::is_nothrow_move_constructible_v<Error>): storage_(std::in_place_type<Error>, std::move(error)) {}
+    constexpr Result(const Error& error) noexcept(std::is_nothrow_copy_constructible_v<Error>) : storage_(std::in_place_type<Error>, error) {}
 
     /** @brief Returns whether the result contains a successful value. */
     [[nodiscard]] constexpr bool ok() const noexcept {
@@ -266,8 +266,8 @@ public:
     constexpr Result& operator=(Result&&) = default;
     constexpr Result& operator=(const Result&) = default;
 
-    constexpr Result(Error&& error) noexcept(std::is_nothrow_move_constructible_v<Error&&>) : error_(std::in_place, std::move(error)) {}
-    constexpr Result(const Error& error) noexcept(std::is_nothrow_copy_constructible_v<const Error&>) : error_(std::in_place, error) {}
+    constexpr Result(Error&& error) noexcept(std::is_nothrow_move_constructible_v<Error>) : error_(std::in_place, std::move(error)) {}
+    constexpr Result(const Error& error) noexcept(std::is_nothrow_copy_constructible_v<Error>) : error_(std::in_place, error) {}
 
     /** @brief Returns whether the result represents success. */
     [[nodiscard]] constexpr bool ok() const noexcept {
