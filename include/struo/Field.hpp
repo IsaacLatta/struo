@@ -59,7 +59,8 @@ namespace struo {
          * and empty set of keys to force instantiation from defaults (e.g., for an environment variable).
          * Fields are REQUIRED by default. If no key or default supplies a value, loading fails.
          * Explicitly OPTIONAL fields retain their member initializer when no value is supplied.
-         * A default can satisfy a REQUIRED field.
+         * A default can satisfy a REQUIRED field. std::optional<T> fields are OPTIONAL by default,
+         * unless explicitly overridden.
          *
          * Defaults are tried in order until one supplies a value. an error stops
          * loading. Transforms then run in order, followed by constraints. Either
@@ -165,8 +166,16 @@ namespace struo {
         }
 
     private:
+        [[nodiscard]] static consteval Presence defaultPresence() {
+            if(IsOptional<value_type>) {
+                return OPTIONAL;
+            }
+            return REQUIRED;
+        }
+
+    private:
         Keys aliases_{};
-        Presence presence_ { REQUIRED };
+        Presence presence_ { defaultPresence() };
         std::optional<std::string_view> parsed_as_key_{};
         std::optional<staged_type> staged_value_{};
         std::vector<DefaultFunc> defaults_{};

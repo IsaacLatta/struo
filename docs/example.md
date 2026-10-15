@@ -206,9 +206,10 @@ template<> struct SchemaTraits<Upstream> {
 
 Fields are required by default, but a schema default can satisfy that requirement.
 An `OPTIONAL` field with no supplied value or default keeps its member initializer
-and skips transforms and constraints. A `std::optional<T>` member still needs
-`OPTIONAL` if omission should be accepted. Constraints on an `std::optional` receive the
-optional itself, but the `IfPresent` wrapper can apply constraints on the optional's type when present.
+and skips transforms and constraints. Fields are required by default, except `std::optional<T>`
+fields, which default to `OPTIONAL`. A `Presence` argument in the field's constructor overrides these defaults.
+Constraints on an `std::optional<T>` receive the optional itself, but the `IfPresent` wrapper 
+can apply constraints on the optional's type when present.
 
 ```cpp
 Field<&Upstream::health_check>{Keys{"health_check"}, OPTIONAL,

@@ -29,7 +29,11 @@ struct InitializedConfig {
     std::optional<std::map<std::string, int>> map{std::map<std::string, int>{{"original", 3}}};
 };
 
-struct RequiredConfig {
+struct OptionalConfig {
+    std::optional<int> value{42};
+};
+
+struct RequiredOptionalConfig {
     std::optional<int> value{42};
 };
 
@@ -86,9 +90,16 @@ struct SchemaTraits<InitializedConfig> {
 };
 
 template<>
-struct SchemaTraits<RequiredConfig> {
+struct SchemaTraits<OptionalConfig> {
     static auto schema() {
-        return Object{Field<&RequiredConfig::value>{Keys{"value"}}};
+        return Object{Field<&OptionalConfig::value>{Keys{"value"}}};
+    }
+};
+
+template<>
+struct SchemaTraits<RequiredOptionalConfig> {
+    static auto schema() {
+        return Object{Field<&RequiredOptionalConfig::value>{Keys{"value"}, REQUIRED }};
     }
 };
 
@@ -317,13 +328,19 @@ TEST(Optionals, PresentValueOverridesSchemaDefault) {
     EXPECT_EQ(result.value().cleared, 8);
 }
 
-TEST(Optionals, MissingRequiredFieldFailsDespiteUserDefault) {
-    const auto result = load_config<RequiredConfig>("{}");
+TEST(Optionals, StdOptionalFieldsAreOptionalByDefault) {
+    const auto result = load_config<OptionalConfig>("{}");
+    ASSERT_TRUE(result) << result.error().what();
+    EXPECT_EQ(result.value().value.value(), 42);
+}
+
+TEST(Optionals, StdOptionalFieldMarkedRequiredIsNotOptional) {
+    const auto result = load_config<RequiredOptionalConfig>("{}");
     ASSERT_FALSE(result);
 }
 
 TEST(Optionals, PresentRequiredFieldSucceeds) {
-    const auto result = load_config<RequiredConfig>("value: 7");
+    const auto result = load_config<RequiredOptionalConfig>("value: 7");
     ASSERT_TRUE(result);
     EXPECT_EQ(result.value().value, 7);
 }

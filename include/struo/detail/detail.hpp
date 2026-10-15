@@ -13,6 +13,7 @@
 
 #include "struo/concepts.hpp"
 #include "struo/Result.hpp"
+
 #include "struo/detail/traits.hpp"
 
 namespace struo::detail {
@@ -120,4 +121,5 @@ template<typename Parser>
         return err(INVALID_VALUE, e.what());
     }
 }
+
 }
