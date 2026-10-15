@@ -36,9 +36,9 @@ struct Local {
 
 struct Upstream {
     std::vector<std::string> hosts;
-    int port{};
-    std::string route;
     std::optional<std::string> health_check;
+    std::string route;
+    int port{};
 };
 
 enum class BackendKind { 
@@ -55,8 +55,7 @@ struct Config {
 
 ## Constraints
 
-A constraint receives a field's value and returns `struo::Result<void>`: `ok()`
-accepts the value, and `err(...)` rejects it. Lambdas and function objects both
+A constraint is a callable that receives a field's value and returns `struo::Result<void>`. Lambdas and function objects both
 work. As an example, we define our own constraint that routes must be paths without a query string:
 
 ```cpp
@@ -75,7 +74,6 @@ struo::Constraints{routeWithoutQuery}
 ```
 
 This is the pack passed to the route field in the [schema below](#schemas).
-The following declaration illustrations use names from `struo` without qualification.
 
 The schema also uses `Or<IsValidIpv4, IsValidHostname>` to accept either an IPv4
 address or a hostname. `ForEach` checks each host in the vector, while `NotEmpty`
@@ -95,9 +93,9 @@ Constraints{IfPresent<routeWithoutQuery>}
 
 ## Transforms
 
-A transform receives the current value and returns its replacement. Return `T`
-for a simple transformation, or `Result<T>` when it can fail. This custom transform
-removes trailing slashes while preserving the root route `/`:
+Like constraints, a transform is also a callable, and receives the current value and
+returns its replacement. Return `T` for a simple transformation, or `Result<T>` when it can fail. 
+This custom transform removes trailing slashes while preserving the root route `/`:
 
 ```cpp
 std::string removeTrailingSlashes(const std::string& route) {
@@ -109,7 +107,6 @@ std::string removeTrailingSlashes(const std::string& route) {
 }
 ```
 
-The schema chains `TrimWhitespace`, `AddLeadingSlash`, and this transform.
 For example, `" api/// "` becomes `/api`. Transforms run in their listed order,
 before constraints, for both supplied values and schema defaults.
 
@@ -127,9 +124,9 @@ Transforms{IfPresent<TrimWhitespace, AddLeadingSlash>}
 
 ## Defaults
 
-Defaults supply missing fields. `FromEnv<"APP_UPSTREAM_PORT">` reads the port
-from an environment variable, while a custom lambda supplies `/` as the default
-route:
+Defaults similarily are callables that supply missing fields and take no arguments. 
+`FromEnv<"APP_UPSTREAM_PORT">` reads the port from an environment variable, while a custom lambda supplies `/` 
+as the default route:
 
 ```cpp
 inline constexpr auto defaultRoute = [] { return std::string{"/"}; };
@@ -141,7 +138,6 @@ Pass that provider to the route field's defaults pack:
 Defaults{defaultRoute}
 ```
 
-A custom default provider takes no arguments and can return a value directly.
 For a provider that can decline or fail, return `Result<std::optional<T>>`:
 
 - a present `std::optional` supplies a value
@@ -156,7 +152,7 @@ Defaults{[] { return std::optional<std::string>{}; }, defaultRoute}
 
 A configured port takes precedence over `FromEnv`. If the port is omitted, an
 unset or invalid `APP_UPSTREAM_PORT` causes an error. Defaults only apply to
-missing fields; they do not replace invalid configured values.
+missing fields. They do not replace invalid configured values.
 
 ```cpp
 Field<&Upstream::port>{Keys{"port"}, Defaults{FromEnv<"APP_UPSTREAM_PORT">},
@@ -184,16 +180,20 @@ template<> struct SchemaTraits<Local> {
 template<> struct SchemaTraits<Upstream> {
     static auto schema() {
         return Object{
+            
             Field<&Upstream::hosts>{Keys{"hosts"},
                 Transforms{ForEach<TrimWhitespace>},
                 Constraints{NotEmpty, ForEach<Or<IsValidIpv4, IsValidHostname>>}},
+
             Field<&Upstream::port>{Keys{"port"},
                 Defaults{FromEnv<"APP_UPSTREAM_PORT">},
                 Constraints{Range<1, 65535>}},
+            
             Field<&Upstream::route>{Keys{"route"},
                 Defaults{defaultRoute},
                 Transforms{TrimWhitespace, AddLeadingSlash, removeTrailingSlashes},
                 Constraints{routeWithoutQuery}},
+            
             Field<&Upstream::health_check>{Keys{"health_check"}, OPTIONAL,
                 Transforms{IfPresent<TrimWhitespace, AddLeadingSlash>},
                 Constraints{IfPresent<routeWithoutQuery>}}
@@ -218,7 +218,7 @@ Field<&Upstream::health_check>{Keys{"health_check"}, OPTIONAL,
 ## Variants
 
 `std::variant` is supported through binding each alternative to a tag. Enum tags use their enumerator
-names and are case-sensitive. The default keys are `type` and `value`;
+names and are case-sensitive. The default keys are `type` and `value`, but the
 `TagKey` and `ContentKey` can customize them.
 
 ```cpp
@@ -291,9 +291,6 @@ The optional health-check route becomes `/health`. Omit `health_check` to leave
 it empty,  omit `route` to use the custom `/` default, and add `port: 0` to see a
 range failure. Set `hosts: ["bad host"]` to exercise host validation, or set
 `route: "api?debug=true"` to exercise the custom constraint.
-
-Loading stops at the first error; inspect `error().code()` for its category and
-`error().what()` for the diagnostic and configuration context.
 
 To select the other alternative, replace the YAML with:
 

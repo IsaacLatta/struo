@@ -23,7 +23,7 @@ namespace struo {
  */
 template<auto Min, auto Max>
 requires IsValidRangeBounds<Min, Max>
-inline constexpr auto Range { detail::RangeConstraint<Min, Max>{} };
+inline constexpr detail::RangeConstraint<Min, Max> Range{};
 
 /**
  * @brief Requires a value greater than or equal to Min.
@@ -36,7 +36,7 @@ inline constexpr auto Range { detail::RangeConstraint<Min, Max>{} };
  */
 template<auto Min>
 requires (std::numeric_limits<decltype(Min)>::is_specialized && IsValidRangeBounds<Min, std::numeric_limits<decltype(Min)>::max()>)
-inline constexpr auto AtLeast { detail::RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()>{} };
+inline constexpr detail::RangeConstraint<Min, std::numeric_limits<decltype(Min)>::max()> AtLeast{};
 
 /**
  * @brief Requires a value less than or equal to Max.
@@ -49,7 +49,7 @@ inline constexpr auto AtLeast { detail::RangeConstraint<Min, std::numeric_limits
  */
 template<auto Max>
 requires (std::numeric_limits<decltype(Max)>::is_specialized && IsValidRangeBounds<std::numeric_limits<decltype(Max)>::lowest(), Max>)
-inline constexpr auto AtMost { detail::RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max>{} };
+inline constexpr detail::RangeConstraint<std::numeric_limits<decltype(Max)>::lowest(), Max> AtMost{};
 
 /**
  * @brief Requires a string or container size between Min and Max, inclusive.
@@ -60,7 +60,7 @@ inline constexpr auto AtMost { detail::RangeConstraint<std::numeric_limits<declt
  */
 template<size_t Min, size_t Max>
 requires (Min <= Max)
-inline constexpr auto SizeRange { detail::SizeRangeConstraint<Min, Max>{} };
+inline constexpr detail::SizeRangeConstraint<Min, Max> SizeRange{};
 
 /**
  * @brief Requires a string or container to contain at least Min elements.
@@ -70,7 +70,7 @@ inline constexpr auto SizeRange { detail::SizeRangeConstraint<Min, Max>{} };
  * @endcode
  */
 template<size_t Min>
-inline constexpr auto SizeAtLeast { detail::SizeRangeConstraint<Min, std::numeric_limits<size_t>::max()>{} };
+inline constexpr detail::SizeRangeConstraint<Min, std::numeric_limits<size_t>::max()> SizeAtLeast{};
 
 /**
  * @brief Requires a string or container to contain at most Max elements.
@@ -80,7 +80,7 @@ inline constexpr auto SizeAtLeast { detail::SizeRangeConstraint<Min, std::numeri
  * @endcode
  */
 template<size_t Max>
-inline constexpr auto SizeAtMost { detail::SizeRangeConstraint<std::numeric_limits<size_t>::min(), Max>{} };
+inline constexpr detail::SizeRangeConstraint<std::numeric_limits<size_t>::min(), Max> SizeAtMost{};
 
 /**
  * @brief Requires a string or container to contain exactly N elements.
@@ -90,7 +90,7 @@ inline constexpr auto SizeAtMost { detail::SizeRangeConstraint<std::numeric_limi
  * @endcode
  */
 template<size_t N>
-inline constexpr auto SizeExactly { detail::SizeRangeConstraint<N, N>{} };
+inline constexpr detail::SizeRangeConstraint<N, N> SizeExactly{};
 
 /**
  * @brief Requires at least one of the supplied constraints to succeed.
@@ -102,7 +102,7 @@ inline constexpr auto SizeExactly { detail::SizeRangeConstraint<N, N>{} };
  * @endcode
  */
 template<auto... Constraints>
-inline constexpr auto Or { detail::OrConstraint<Constraints...>{} };
+inline constexpr detail::OrConstraint<Constraints...> Or{};
 
 /**
  * @brief Requires every supplied constraint to succeed.
@@ -114,7 +114,7 @@ inline constexpr auto Or { detail::OrConstraint<Constraints...>{} };
  * @endcode
  */
 template<auto... Constraints>
-inline constexpr auto And { detail::AndConstraint<Constraints...>{} };
+inline constexpr detail::AndConstraint<Constraints...> And{};
 
 /**
  * @brief Requires the supplied constraint to fail.
@@ -124,7 +124,7 @@ inline constexpr auto And { detail::AndConstraint<Constraints...>{} };
  * @endcode
  */
 template<auto Constraint>
-inline constexpr auto Not { detail::NotConstraint<Constraint>{} };
+inline constexpr detail::NotConstraint<Constraint> Not{};
 
 /**
  * @brief Requires exactly one of the supplied constraints to succeed.
@@ -137,7 +137,7 @@ inline constexpr auto Not { detail::NotConstraint<Constraint>{} };
  * @endcode
  */
 template<auto... Constraints>
-inline constexpr auto ExactlyOne { detail::ExactlyOneConstraint<Constraints...>{} };
+inline constexpr detail::ExactlyOneConstraint<Constraints...> ExactlyOne{};
 
 /**
  * @brief Requires a value equal to one of the supplied values.
@@ -147,7 +147,7 @@ inline constexpr auto ExactlyOne { detail::ExactlyOneConstraint<Constraints...>{
  * @endcode
  */
 template<auto... Values>
-inline constexpr auto OneOf { detail::OneOfConstraint<Values...>{} };
+inline constexpr detail::OneOfConstraint<Values...> OneOf{};
 
 /**
  * @brief Requires a value strictly greater than zero.
@@ -156,7 +156,7 @@ inline constexpr auto OneOf { detail::OneOfConstraint<Values...>{} };
  * Field<&Config::count>{Keys{"count"}, Constraints{Positive}}
  * @endcode
  */
-inline constexpr auto Positive { detail::PositiveConstraint{} };
+inline constexpr detail::PositiveConstraint Positive{};
 
 /**
  * @brief Requires a string or container to be nonempty.
@@ -165,7 +165,7 @@ inline constexpr auto Positive { detail::PositiveConstraint{} };
  * Field<&Config::name>{Keys{"name"}, Constraints{NotEmpty}}
  * @endcode
  */
-inline constexpr auto NotEmpty { detail::NotEmptyConstraint{} };
+inline constexpr detail::NotEmptyConstraint NotEmpty{};
 
 /**
  * @brief Requires a string to start with Prefix.
@@ -212,7 +212,7 @@ inline constexpr detail::IsFiniteConstraint IsFinite{};
  * Field<&Config::input>{Keys{"input"}, Constraints{FileExists}}
  * @endcode
  */
-inline constexpr auto FileExists { detail::FileExistsConstraint{} };
+inline constexpr detail::FileExistsConstraint FileExists{};
 
 /**
  * @brief Requires a path to refer to an existing directory.
@@ -223,7 +223,7 @@ inline constexpr auto FileExists { detail::FileExistsConstraint{} };
  * Field<&Config::output>{Keys{"output"}, Constraints{DirectoryExists}}
  * @endcode
  */
-inline constexpr auto DirectoryExists { detail::DirectoryExistsConstraint{} };
+inline constexpr detail::DirectoryExistsConstraint DirectoryExists{};
 
 /**
  * @brief Requires a port number between 0 and 65535, inclusive.
@@ -249,7 +249,7 @@ inline constexpr auto IsValidPort { Range<0, 65535> };
  * Field<&Config::hostname>{Keys{"hostname"}, Constraints{IsValidHostname}}
  * @endcode
  */
-inline constexpr auto IsValidHostname { detail::IsValidHostnameConstraint{} };
+inline constexpr detail::IsValidHostnameConstraint IsValidHostname{};
 
 /**
  * @brief Requires a string containing a valid IPv6 address.
@@ -261,7 +261,7 @@ inline constexpr auto IsValidHostname { detail::IsValidHostnameConstraint{} };
  * Field<&Config::address>{Keys{"address"}, Constraints{IsValidIpv6}}
  * @endcode
  */
-inline constexpr auto IsValidIpv6 { detail::IsValidIpv6Constraint{} };
+inline constexpr detail::IsValidIpv6Constraint IsValidIpv6{};
 
 /**
  * @brief Requires a string containing a valid dotted-decimal IPv4 address.
@@ -272,7 +272,7 @@ inline constexpr auto IsValidIpv6 { detail::IsValidIpv6Constraint{} };
  * Field<&Config::address>{Keys{"address"}, Constraints{IsValidIpv4}}
  * @endcode
  */
-inline constexpr auto IsValidIpv4 { detail::IsValidIpv4Constraint{} };
+inline constexpr detail::IsValidIpv4Constraint IsValidIpv4{};
 
 #endif // STRUO_PLATFORM_LINUX
 

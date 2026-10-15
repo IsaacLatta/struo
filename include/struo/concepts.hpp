@@ -51,7 +51,10 @@ template<typename T>
 concept HasFormatter = std::is_default_constructible_v<std::formatter<std::remove_cvref_t<T>, char>>;
 
 template<auto Min, auto Max>
-concept IsValidRangeBounds = std::same_as<decltype(Min), decltype(Max)> && requires { requires (Min <= Max); };
+concept IsValidRangeBounds = std::same_as<decltype(Min), decltype(Max)> && 
+    requires { requires (Min <= Max); } && 
+    std::numeric_limits<decltype(Max)>::is_specialized && 
+    std::numeric_limits<decltype(Min)>::is_specialized;
 
 template<typename T>
 concept IsOptional = detail::IsOptionalImpl<std::remove_cvref_t<T>>::value;

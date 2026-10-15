@@ -2,15 +2,15 @@
 
 Struo is a C++20 configuration library for loading YAML, JSON, and TOML into
 your own types. Define a schema that describes fields, variants, defaults,
-transforms, and constraints; Struo handles loading and populating your structs.
+transforms, and constraints. Struo handles loading and populating your structs.
 
 ## Why
 
 Complex configurations change as applications grow. Struo aims to make them easy
 to represent and quick to iterate on, removing the need to write application
-parsing code. Validation, defaulting, and populating user structs belong alongside
-the schema, so adding a configuration option does not require another handwritten
-parsing routine.
+parsing code, and cumbersome default and validation logic. This is not a parsing library, 
+nor is it a serialization library, it instead handles the stage after loading the parse tree, 
+where the parsed documented is validated and loaded into the type system.
 
 ## Design goals
 
@@ -45,8 +45,8 @@ struct Local {
 
 struct Upstream {
     std::vector<std::string> hosts;
-    int port{};
     std::string route;
+    int port{};
 };
 
 enum class BackendKind { 
@@ -105,7 +105,6 @@ struct SchemaTraits<Config> {
 int main() {
     auto config = struo::load<Config, struo::Yaml>("config.yaml");
     if (!config) {
-        // Give users a diagnostic identifying the configuration value to fix.
         std::cerr << config.error().what() << '\n';
         return 1;
     }
@@ -136,6 +135,6 @@ and map keys.
 
 ## Documentation
 
+To learn more, see the following:
 - [Building and linking](docs/build.md): dependencies, CMake options, and compiler coverage.
 - [Worked example](docs/example.md): variants and custom constraints, transforms, and defaults.
-- [Tests](tests/README.md): running the test suite and exploring larger configurations.
