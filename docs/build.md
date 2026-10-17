@@ -74,29 +74,16 @@ Include `<struo/struo.hpp>` for the schema API and the header for each format us
 | `STRUO_BUILD_TESTS` | `ON` when built as the top-level project; otherwise `OFF` | Build Struo's tests |
 
 Linking `struo::struo` propagates its C++20 requirement, include paths, and enabled
-format dependencies. On MSVC it also enables `/Zc:preprocessor`. Struo's warning
-flags are private to its own build; the development presets additionally treat
-warnings as errors.
-
-Use normal CMake settings such as `CMAKE_CXX_COMPILER` and `CMAKE_BUILD_TYPE` to
-select your compiler and build configuration. The public target defines
-`STRUO_PLATFORM_LINUX` as `1` on Linux and `0` elsewhere. The built-in
-`IsValidHostname`, `IsValidIpv4`, and `IsValidIpv6` constraints are available only
-on Linux.
+format dependencies. On MSVC it also enables `/Zc:preprocessor`. Use normal CMake 
+settings such as `CMAKE_CXX_COMPILER` and `CMAKE_BUILD_TYPE` to select your compiler 
+and build configuration. 
 
 ## Errors and assertions
 
-Struo reports configuration loading failures through `struo::Result<T>`, rather
-than throwing exceptions for those failures. Check the result before accessing
-its value. `error().what()` provides the error message and `error().code()` provides the
-category. This is not a no-throw guarantee, exceptions from user callbacks
-or allocation failures can still propagate.
-
-Assertions check API preconditions and internal invariants, preventing undefined behavior (UB), 
-including within the struo implementation itself. For example, accessing the value of a 
-failed `Result` triggers an assertion. A failed assertion prints to `stderr` and aborts. 
-
-Assertions are enabled by default, including in Release builds, independently of
+Assertions check preconditions and internal invariants, preventing undefined behavior (UB), 
+including within the struo implementation itself. For example, accessing the value (e.g., `T`) of a 
+failed `struo::Result<T>` triggers an assertion. A failed assertion prints to `stderr` and aborts.  Assertions 
+are enabled by default, including in Release builds, independently of
 `NDEBUG`. Define the `STRUO_NO_ASSERT` preprocessor macro to disable them. After
 adding or fetching Struo, apply it to the library and propagate it to consumers:
 
